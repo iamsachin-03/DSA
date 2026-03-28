@@ -590,6 +590,55 @@
     color: var(--accent);
   }
 </style>
+
+
+<!-- ════════════════════════════════════════════
+     DIJKSTRA PANEL
+════════════════════════════════════════════ -->
+<style>
+  /* Dijkstra-specific overrides */
+  .dijk-pq-item {
+    display:flex;align-items:center;gap:6px;
+    padding:6px 12px;border-radius:8px;
+    background:#1a0d3d;border:1.5px solid #7c3aed;
+    font-family:'JetBrains Mono',monospace;font-size:12px;font-weight:700;color:#c084fc;
+    animation:popIn 0.3s cubic-bezier(0.34,1.56,0.64,1);
+  }
+  .dijk-pq-item.top-item{background:#2d2000;border-color:#f59e0b;color:#f59e0b;}
+  .dijk-dist-cell{
+    display:inline-flex;flex-direction:column;align-items:center;
+    min-width:44px;padding:6px 8px;border-radius:8px;
+    background:#1e1e30;border:1.5px solid #2a2a3a;
+    font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:800;
+    transition:all 0.3s;
+  }
+  .dijk-dist-cell.settled{background:#003d32;border-color:#00f5c8;color:#00f5c8;}
+  .dijk-dist-cell.relaxing{background:#3d2800;border-color:#f59e0b;color:#f59e0b;
+    box-shadow:0 0 10px #f59e0b55;}
+  .dijk-dist-cell.updated{background:#1a0d3d;border-color:#7c3aed;color:#c084fc;}
+  .dijk-dist-cell .cell-idx{font-size:9px;color:var(--text-dim);font-weight:400;margin-top:2px;}
+  .dijk-relax-badge{
+    padding:4px 12px;border-radius:6px;font-family:'JetBrains Mono',monospace;
+    font-size:11px;font-weight:700;letter-spacing:0.5px;
+  }
+  .dijk-relax-badge.yes{background:#003d32;color:#00f5c8;border:1px solid #00f5c8;}
+  .dijk-relax-badge.no{background:#1a0505;color:#4a5568;border:1px solid #2a2a3a;}
+  .flowchart-dijk svg{width:100%;height:auto;}
+  .why-card{
+    border-left:3px solid var(--accent2);padding:10px 14px;
+    background:#12101f;border-radius:0 8px 8px 0;margin-bottom:10px;font-size:13px;line-height:1.65;
+  }
+  .why-card strong{color:#c084fc;}
+  .complexity-row-dijk{display:flex;gap:16px;flex-wrap:wrap;margin-top:8px;}
+  .complexity-badge-dijk{
+    padding:10px 18px;border-radius:10px;border:1.5px solid var(--border);
+    background:var(--surface2);font-family:'JetBrains Mono',monospace;font-size:12px;
+    display:flex;flex-direction:column;gap:4px;flex:1;min-width:160px;
+  }
+  .complexity-badge-dijk .cb-label{font-size:9px;color:var(--text-dim);text-transform:uppercase;letter-spacing:1px;}
+  .complexity-badge-dijk .cb-val{font-size:18px;font-weight:800;color:var(--accent);}
+  .complexity-badge-dijk .cb-why{font-size:11px;color:var(--text-dim);margin-top:2px;}
+</style>
 </head>
 <body>
 
@@ -602,7 +651,7 @@
 <nav class="group-bar">
   <div class="group-tab active" id="grp-learning" onclick="switchGroup('learning')">
     <span class="group-icon">📖</span> Learning
-    <span class="group-count">3</span>
+    <span class="group-count">5</span>
   </div>
   <div class="group-tab" id="grp-bfsdfs" onclick="switchGroup('bfsdfs')">
     <span class="group-icon">🔀</span> BFS / DFS
@@ -614,7 +663,7 @@
   </div>
   <div class="group-tab" id="grp-shortestpath" onclick="switchGroup('shortestpath')">
     <span class="group-icon">📍</span> Shortest Path
-    <span class="group-count">2</span>
+    <span class="group-count">4</span>
   </div>
 </nav>
 
@@ -628,6 +677,12 @@
   </div>
   <div class="tab" onclick="switchTab('dfs')">
     <span class="qtag">Q3</span> DFS Traversal
+  </div>
+  <div class="tab" onclick="switchTab('graphbasics')">
+    <span class="qtag">L1</span> Graph Basics
+  </div>
+  <div class="tab" onclick="switchTab('adjmatrix')">
+    <span class="qtag">L2</span> Adjacency Matrix
   </div>
 </nav>
 
@@ -650,12 +705,756 @@
 <nav class="tab-bar" id="subtabs-shortestpath" style="display:none">
   <div class="tab" onclick="switchTab('shortestpath1')"><span class="qtag">GFG</span> Shortest Path (Unit Weight)</div>
   <div class="tab" onclick="switchTab('shortestpathdag')"><span class="qtag">GFG</span> Shortest Path in DAG</div>
+  <div class="tab" onclick="switchTab('dijkstra')"><span class="qtag">GFG</span> Dijkstra Algorithm</div>
+  <div class="tab" onclick="switchTab('bfsmatrix')"><span class="qtag">1091</span> Shortest Path Binary Matrix</div>
 </nav>
 
 <!-- ════════════════════════════════════════════
      BFS PANEL
 ════════════════════════════════════════════ -->
 <div id="panel-container">
+
+<!-- ════════════════════════════════════════════
+     GRAPH BASICS PANEL
+════════════════════════════════════════════ -->
+<div id="tab-graphbasics" class="panel">
+
+  <div class="section-heading">Graph Basics</div>
+  <p class="section-sub">A graph is a data structure of vertices (nodes) connected by edges. Every graph algorithm you will ever write starts here — understand these fundamentals cold.</p>
+
+  <!-- Row 1: What is a Graph + Degree Terminology -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🔷 What is a Graph?</div>
+      <div class="insight insight-cyan" style="margin-bottom:8px">
+        <strong>Definition</strong>
+        A graph G = (V, E) where V is a set of vertices (nodes) and E is a set of edges (connections). Edges can carry direction, weight, or both.
+      </div>
+      <svg viewBox="0 0 340 160" style="width:100%;height:auto;display:block;margin-bottom:12px">
+        <defs>
+          <marker id="gb-arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="#00f5c8"/>
+          </marker>
+        </defs>
+        <!-- Undirected example -->
+        <text x="85" y="16" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa" letter-spacing="1">UNDIRECTED</text>
+        <circle cx="40"  cy="80" r="18" fill="#1e1e30" stroke="#00f5c8" stroke-width="2"/>
+        <circle cx="130" cy="40" r="18" fill="#1e1e30" stroke="#00f5c8" stroke-width="2"/>
+        <circle cx="130" cy="120" r="18" fill="#1e1e30" stroke="#00f5c8" stroke-width="2"/>
+        <text x="40"  y="85" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">A</text>
+        <text x="130" y="45" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">B</text>
+        <text x="130" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">C</text>
+        <line x1="57" y1="70" x2="112" y2="48" stroke="#4a5568" stroke-width="2"/>
+        <line x1="57" y1="90" x2="112" y2="112" stroke="#4a5568" stroke-width="2"/>
+        <line x1="130" y1="58" x2="130" y2="102" stroke="#4a5568" stroke-width="2"/>
+        <!-- Directed example -->
+        <text x="255" y="16" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa" letter-spacing="1">DIRECTED</text>
+        <circle cx="210" cy="80" r="18" fill="#1e1e30" stroke="#c084fc" stroke-width="2"/>
+        <circle cx="300" cy="40" r="18" fill="#1e1e30" stroke="#c084fc" stroke-width="2"/>
+        <circle cx="300" cy="120" r="18" fill="#1e1e30" stroke="#c084fc" stroke-width="2"/>
+        <text x="210" y="85" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#c084fc">A</text>
+        <text x="300" y="45" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#c084fc">B</text>
+        <text x="300" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#c084fc">C</text>
+        <defs>
+          <marker id="gb-arr2" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L7,3 z" fill="#c084fc"/>
+          </marker>
+        </defs>
+        <line x1="227" y1="70" x2="283" y2="48" stroke="#c084fc" stroke-width="2" marker-end="url(#gb-arr2)"/>
+        <line x1="300" y1="58" x2="300" y2="102" stroke="#c084fc" stroke-width="2" marker-end="url(#gb-arr2)"/>
+        <line x1="283" y1="112" x2="227" y2="90" stroke="#c084fc" stroke-width="2" marker-end="url(#gb-arr2)"/>
+      </svg>
+      <div class="insight insight-purple" style="margin-bottom:0">
+        <strong>Tree = Special Graph</strong>
+        A tree is a connected, acyclic, undirected graph with exactly V-1 edges for V nodes. Every tree is a graph, but not every graph is a tree.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📐 Degree Terminology</div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div class="insight insight-cyan" style="margin-bottom:0">
+          <strong>Degree (Undirected)</strong>
+          Number of edges connected to a node. Sum of all degrees = 2 × |E| (each edge counted twice).
+        </div>
+        <div class="insight insight-purple" style="margin-bottom:0">
+          <strong>In-Degree (Directed)</strong>
+          Number of incoming edges to a node. In topological sort, nodes with in-degree 0 are processed first.
+        </div>
+        <div class="insight insight-amber" style="margin-bottom:0">
+          <strong>Out-Degree (Directed)</strong>
+          Number of outgoing edges from a node. Sum of all out-degrees = |E|.
+        </div>
+        <svg viewBox="0 0 320 120" style="width:100%;height:auto;display:block">
+          <defs>
+            <marker id="gb-arr3" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#f59e0b"/>
+            </marker>
+          </defs>
+          <circle cx="80"  cy="60" r="20" fill="#1a1000" stroke="#f59e0b" stroke-width="2"/>
+          <circle cx="180" cy="30" r="18" fill="#1e1e30" stroke="#3a3a50" stroke-width="1.5"/>
+          <circle cx="180" cy="90" r="18" fill="#1e1e30" stroke="#3a3a50" stroke-width="1.5"/>
+          <circle cx="260" cy="60" r="18" fill="#1e1e30" stroke="#3a3a50" stroke-width="1.5"/>
+          <text x="80"  y="65" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#f59e0b">X</text>
+          <text x="180" y="35" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8888aa">A</text>
+          <text x="180" y="95" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8888aa">B</text>
+          <text x="260" y="65" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#8888aa">C</text>
+          <line x1="98"  y1="50" x2="163" y2="34" stroke="#f59e0b" stroke-width="2" marker-end="url(#gb-arr3)"/>
+          <line x1="98"  y1="70" x2="163" y2="86" stroke="#f59e0b" stroke-width="2" marker-end="url(#gb-arr3)"/>
+          <line x1="196" y1="36" x2="243" y2="52" stroke="#4a5568" stroke-width="1.5" marker-end="url(#gb-arr3)"/>
+          <line x1="196" y1="84" x2="243" y2="68" stroke="#4a5568" stroke-width="1.5" marker-end="url(#gb-arr3)"/>
+          <text x="80" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">out=2, in=0</text>
+          <text x="80" y="112" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">degree=2</text>
+        </svg>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: 4 Graph Types -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🗂️ Types of Graphs</div>
+    <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:16px">
+
+      <!-- Directed vs Undirected -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#00f5c8;letter-spacing:1px;margin-bottom:10px">DIRECTED / UNDIRECTED</div>
+        <svg viewBox="0 0 120 80" style="width:100%;height:auto;display:block;margin-bottom:8px">
+          <defs>
+            <marker id="t1-arr" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#c084fc"/>
+            </marker>
+          </defs>
+          <circle cx="20" cy="40" r="13" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <circle cx="60" cy="20" r="13" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <circle cx="60" cy="60" r="13" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <circle cx="100" cy="40" r="13" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <text x="20"  y="44" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">1</text>
+          <text x="60"  y="24" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">2</text>
+          <text x="60"  y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">3</text>
+          <text x="100" y="44" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">4</text>
+          <line x1="33" y1="33" x2="47" y2="26" stroke="#c084fc" stroke-width="1.5" marker-end="url(#t1-arr)"/>
+          <line x1="33" y1="47" x2="47" y2="54" stroke="#c084fc" stroke-width="1.5" marker-end="url(#t1-arr)"/>
+          <line x1="73" y1="26" x2="87" y2="33" stroke="#c084fc" stroke-width="1.5" marker-end="url(#t1-arr)"/>
+          <line x1="73" y1="54" x2="87" y2="47" stroke="#c084fc" stroke-width="1.5" marker-end="url(#t1-arr)"/>
+        </svg>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Directed (arrows) — edges have direction A→B. Undirected — A–B goes both ways.</div>
+      </div>
+
+      <!-- Weighted vs Unweighted -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;margin-bottom:10px">WEIGHTED / UNWEIGHTED</div>
+        <svg viewBox="0 0 120 80" style="width:100%;height:auto;display:block;margin-bottom:8px">
+          <circle cx="20" cy="40" r="13" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="60" cy="20" r="13" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="60" cy="60" r="13" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+          <circle cx="100" cy="40" r="13" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="20"  y="44" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">A</text>
+          <text x="60"  y="24" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">B</text>
+          <text x="60"  y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">C</text>
+          <text x="100" y="44" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">D</text>
+          <line x1="33" y1="33" x2="47" y2="26" stroke="#f59e0b" stroke-width="1.5"/>
+          <line x1="33" y1="47" x2="47" y2="54" stroke="#f59e0b" stroke-width="1.5"/>
+          <line x1="73" y1="26" x2="87" y2="33" stroke="#f59e0b" stroke-width="1.5"/>
+          <line x1="73" y1="54" x2="87" y2="47" stroke="#f59e0b" stroke-width="1.5"/>
+          <text x="38" y="27" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#fbbf24">4</text>
+          <text x="38" y="57" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#fbbf24">7</text>
+          <text x="82" y="27" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#fbbf24">2</text>
+          <text x="82" y="57" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#fbbf24">9</text>
+        </svg>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Each edge has a value (cost, distance, capacity). Dijkstra, Prim, Kruskal all need weighted graphs.</div>
+      </div>
+
+      <!-- Cyclic vs Acyclic -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#ef4444;letter-spacing:1px;margin-bottom:10px">CYCLIC / ACYCLIC</div>
+        <svg viewBox="0 0 120 80" style="width:100%;height:auto;display:block;margin-bottom:8px">
+          <defs>
+            <marker id="t3-arr" markerWidth="6" markerHeight="6" refX="4" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L6,3 z" fill="#ef4444"/>
+            </marker>
+          </defs>
+          <circle cx="30" cy="25" r="13" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+          <circle cx="90" cy="25" r="13" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+          <circle cx="60" cy="65" r="13" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+          <text x="30"  y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">1</text>
+          <text x="90"  y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">2</text>
+          <text x="60"  y="69" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">3</text>
+          <line x1="43" y1="25" x2="77" y2="25" stroke="#ef4444" stroke-width="1.5" marker-end="url(#t3-arr)"/>
+          <line x1="82" y1="37" x2="68" y2="53" stroke="#ef4444" stroke-width="1.5" marker-end="url(#t3-arr)"/>
+          <line x1="52" y1="53" x2="38" y2="37" stroke="#ef4444" stroke-width="1.5" marker-end="url(#t3-arr)"/>
+          <text x="60" y="10" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#ef4444">1→2→3→1 cycle!</text>
+        </svg>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Cyclic: can return to a node following edge directions. Acyclic (DAG): no cycles — topological sort is possible.</div>
+      </div>
+
+      <!-- Connected vs Disconnected -->
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:14px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#86efac;letter-spacing:1px;margin-bottom:10px">CONNECTED / DISCONNECTED</div>
+        <svg viewBox="0 0 120 80" style="width:100%;height:auto;display:block;margin-bottom:8px">
+          <circle cx="25" cy="25" r="12" fill="#0d1f0d" stroke="#86efac" stroke-width="1.5"/>
+          <circle cx="65" cy="25" r="12" fill="#0d1f0d" stroke="#86efac" stroke-width="1.5"/>
+          <circle cx="45" cy="60" r="12" fill="#0d1f0d" stroke="#86efac" stroke-width="1.5"/>
+          <circle cx="95" cy="55" r="12" fill="#1a0505" stroke="#4a1a1a" stroke-width="1.5"/>
+          <text x="25" y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#86efac">1</text>
+          <text x="65" y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#86efac">2</text>
+          <text x="45" y="64" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#86efac">3</text>
+          <text x="95" y="59" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#4a5568">4</text>
+          <line x1="37" y1="25" x2="53" y2="25" stroke="#86efac" stroke-width="1.5"/>
+          <line x1="33" y1="35" x2="39" y2="50" stroke="#86efac" stroke-width="1.5"/>
+          <line x1="57" y1="35" x2="51" y2="50" stroke="#86efac" stroke-width="1.5"/>
+          <text x="95" y="72" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">isolated</text>
+        </svg>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Connected: every node reachable from any other. Disconnected: some nodes are unreachable (run BFS/DFS from all unvisited nodes).</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Bipartite Graph -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🔷 What is a Bipartite Graph?</div>
+      <div class="insight insight-cyan" style="margin-bottom:10px">
+        <strong>Definition</strong>
+        Vertices split into two disjoint sets U and V such that every edge connects a node in U to a node in V. No edge exists between two nodes in the same set.
+      </div>
+      <div class="insight insight-purple" style="margin-bottom:10px">
+        <strong>2-Colorable = Bipartite</strong>
+        A graph is bipartite if and only if it can be colored with 2 colors such that no two adjacent nodes share the same color. Use BFS/DFS to verify: if you ever need to color two adjacent nodes the same color, it is NOT bipartite.
+      </div>
+      <div class="insight insight-amber" style="margin-bottom:10px">
+        <strong>Odd Cycle = Not Bipartite</strong>
+        Any graph containing an odd-length cycle (3, 5, 7… nodes) cannot be bipartite. Even cycles are fine.
+      </div>
+      <div class="insight insight-cyan" style="margin-bottom:0">
+        <strong>Where It Appears</strong>
+        Matching problems, recommendation systems (users vs. items), job assignments, scheduling — whenever you model two distinct entity types and their relationships.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🎨 Bipartite Diagram — U vs V</div>
+      <svg viewBox="0 0 340 200" style="width:100%;height:auto;display:block;margin-bottom:14px">
+        <!-- U set background -->
+        <rect x="10" y="10" width="120" height="180" rx="12" fill="#002d26" stroke="#00f5c8" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+        <text x="70" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#00f5c8" letter-spacing="2">SET U</text>
+        <!-- V set background -->
+        <rect x="210" y="10" width="120" height="180" rx="12" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1" stroke-dasharray="4,3" opacity="0.5"/>
+        <text x="270" y="30" text-anchor="middle" font-family="JetBrains Mono" font-size="10" font-weight="700" fill="#c084fc" letter-spacing="2">SET V</text>
+        <!-- U nodes -->
+        <circle cx="70" cy="70"  r="20" fill="#002d26" stroke="#00f5c8" stroke-width="2"/>
+        <circle cx="70" cy="120" r="20" fill="#002d26" stroke="#00f5c8" stroke-width="2"/>
+        <circle cx="70" cy="170" r="20" fill="#002d26" stroke="#00f5c8" stroke-width="2"/>
+        <text x="70" y="75"  text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">1</text>
+        <text x="70" y="125" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">3</text>
+        <text x="70" y="175" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">5</text>
+        <!-- V nodes -->
+        <circle cx="270" cy="90"  r="20" fill="#1a0d3d" stroke="#7c3aed" stroke-width="2"/>
+        <circle cx="270" cy="150" r="20" fill="#1a0d3d" stroke="#7c3aed" stroke-width="2"/>
+        <text x="270" y="95"  text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#c084fc">2</text>
+        <text x="270" y="155" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#c084fc">4</text>
+        <!-- Edges (cross-set only) -->
+        <line x1="90" y1="70"  x2="250" y2="90"  stroke="#f59e0b" stroke-width="2" opacity="0.8"/>
+        <line x1="90" y1="70"  x2="250" y2="150" stroke="#f59e0b" stroke-width="2" opacity="0.8"/>
+        <line x1="90" y1="120" x2="250" y2="90"  stroke="#f59e0b" stroke-width="2" opacity="0.8"/>
+        <line x1="90" y1="170" x2="250" y2="150" stroke="#f59e0b" stroke-width="2" opacity="0.8"/>
+        <!-- Middle labels -->
+        <text x="170" y="100" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">1—2</text>
+        <text x="170" y="116" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">1—4</text>
+        <text x="170" y="132" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">3—2</text>
+        <text x="170" y="165" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#4a5568">5—4</text>
+      </svg>
+      <div style="display:flex;gap:12px">
+        <div style="flex:1;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid #00f5c833">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#00f5c8;font-weight:700;margin-bottom:4px">U = {1, 3, 5}</div>
+          <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#c084fc;font-weight:700;margin-bottom:4px">V = {2, 4}</div>
+          <div style="font-size:11px;color:var(--text-dim)">Edges only cross between sets</div>
+        </div>
+        <div style="flex:1;padding:10px;background:var(--surface2);border-radius:8px;border:1px solid #7c3aed33">
+          <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Color U=cyan, V=purple — no two adjacent nodes share a color. ✓ Bipartite!</div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Bipartite Check Code -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">💻 How to Check if a Graph is Bipartite — BFS 2-Coloring</div>
+    <div class="grid-2" style="gap:20px">
+      <div>
+        <div class="insight insight-amber" style="margin-bottom:12px">
+          <strong>Algorithm</strong>
+          Try to 2-color the graph using BFS. Start any node with color 0. Color all its neighbors with color 1. Color their neighbors with color 0, and so on. If two adjacent nodes ever get the same color — NOT bipartite.
+        </div>
+        <div class="code-tabs">
+          <button class="code-tab active" onclick="switchGbCode('python',this)">Python</button>
+          <button class="code-tab" onclick="switchGbCode('java',this)">Java</button>
+        </div>
+        <div id="gb-code-python" class="code-block active">
+<span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="kw">def</span> <span class="fn">is_bipartite</span>(graph):
+    <span class="cm"># -1 = unvisited, 0 and 1 = two colors</span>
+    color = [-<span class="num">1</span>] * len(graph)
+
+    <span class="kw">for</span> start <span class="kw">in</span> range(len(graph)):
+        <span class="kw">if</span> color[start] != -<span class="num">1</span>:
+            <span class="kw">continue</span>  <span class="cm"># already visited</span>
+
+        queue = deque([start])
+        color[start] = <span class="num">0</span>  <span class="cm"># seed with color 0</span>
+
+        <span class="kw">while</span> queue:
+            node = queue.popleft()
+            <span class="kw">for</span> nb <span class="kw">in</span> graph[node]:
+                <span class="kw">if</span> color[nb] == -<span class="num">1</span>:
+                    color[nb] = <span class="num">1</span> - color[node]
+                    queue.append(nb)
+                <span class="kw">elif</span> color[nb] == color[node]:
+                    <span class="kw">return False</span>  <span class="cm"># same color → not bipartite</span>
+    <span class="kw">return True</span>
+
+<span class="cm"># Square cycle: bipartite (even cycle)</span>
+graph = [[<span class="num">1</span>,<span class="num">3</span>],[<span class="num">0</span>,<span class="num">2</span>],[<span class="num">1</span>,<span class="num">3</span>],[<span class="num">0</span>,<span class="num">2</span>]]
+print(is_bipartite(graph))  <span class="cm"># True</span>
+
+<span class="cm"># Triangle: NOT bipartite (odd cycle)</span>
+graph2 = [[<span class="num">1</span>,<span class="num">2</span>],[<span class="num">0</span>,<span class="num">2</span>],[<span class="num">0</span>,<span class="num">1</span>]]
+print(is_bipartite(graph2)) <span class="cm"># False</span></div>
+        <div id="gb-code-java" class="code-block">
+<span class="kw">import</span> java.util.*;
+
+<span class="kw">class</span> <span class="cls">Solution</span> {
+  <span class="kw">public boolean</span> <span class="fn">isBipartite</span>(<span class="kw">int</span>[][] graph) {
+    <span class="kw">int</span> n = graph.length;
+    <span class="kw">int</span>[] color = <span class="kw">new int</span>[n];
+    Arrays.fill(color, -<span class="num">1</span>); <span class="cm">// -1 = unvisited</span>
+
+    <span class="kw">for</span> (<span class="kw">int</span> start = <span class="num">0</span>; start &lt; n; start++) {
+      <span class="kw">if</span> (color[start] != -<span class="num">1</span>) <span class="kw">continue</span>;
+
+      Queue&lt;<span class="kw">Integer</span>&gt; q = <span class="kw">new</span> LinkedList&lt;&gt;();
+      q.offer(start);
+      color[start] = <span class="num">0</span>;
+
+      <span class="kw">while</span> (!q.isEmpty()) {
+        <span class="kw">int</span> node = q.poll();
+        <span class="kw">for</span> (<span class="kw">int</span> nb : graph[node]) {
+          <span class="kw">if</span> (color[nb] == -<span class="num">1</span>) {
+            color[nb] = <span class="num">1</span> - color[node];
+            q.offer(nb);
+          } <span class="kw">else if</span> (color[nb] == color[node]) {
+            <span class="kw">return false</span>; <span class="cm">// conflict</span>
+          }
+        }
+      }
+    }
+    <span class="kw">return true</span>;
+  }
+}
+<span class="cm">// Time O(V+E) | Space O(V)</span></div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div class="card-title" style="margin-bottom:4px">🔵 BFS 2-Color Trace</div>
+        <div class="example-step highlight">
+          <div class="step-num">1</div>
+          <div class="step-desc">Start node 0, color[0]=<span style="color:#00f5c8">0</span>. Queue: <code>[0]</code></div>
+        </div>
+        <div class="example-step">
+          <div class="step-num">2</div>
+          <div class="step-desc">Pop 0. Neighbors 1,3. Color both with <span style="color:#c084fc">1</span>. Queue: <code>[1,3]</code></div>
+        </div>
+        <div class="example-step">
+          <div class="step-num">3</div>
+          <div class="step-desc">Pop 1. Neighbors 0(skip),2. Color 2 with <span style="color:#00f5c8">0</span>. Queue: <code>[3,2]</code></div>
+        </div>
+        <div class="example-step">
+          <div class="step-num">4</div>
+          <div class="step-desc">Pop 3. Neighbors 0(skip),2(skip). Queue: <code>[2]</code></div>
+        </div>
+        <div class="example-step">
+          <div class="step-num">5</div>
+          <div class="step-desc">Pop 2. Neighbors 1(skip),3(skip). Done.</div>
+        </div>
+        <div class="example-step highlight">
+          <div class="step-num">✓</div>
+          <div class="step-desc">No conflict found. Graph IS bipartite. color = [<span style="color:#00f5c8">0</span>,<span style="color:#c084fc">1</span>,<span style="color:#00f5c8">0</span>,<span style="color:#c084fc">1</span>]</div>
+        </div>
+        <div class="insight insight-red" style="background:#1a0505;border-left:4px solid #ef4444;margin-bottom:0">
+          <strong style="color:#ef4444">NOT Bipartite Case</strong>
+          Triangle 0-1-2-0: Pop 0→color 1,2 with 1. Pop 1→try to color 2 with 0 but color[2]=1=color[1]. Conflict! Return false.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 5: Graph Representations Overview -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🗃️ Graph Representations — 3 Ways</div>
+    <div style="display:grid;grid-template-columns:repeat(3,1fr);gap:16px">
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#00f5c8;letter-spacing:1px;margin-bottom:10px">ADJACENCY LIST</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c084fc;line-height:2;margin-bottom:10px">
+          0: [1, 3]<br>
+          1: [0, 2]<br>
+          2: [1, 3]<br>
+          3: [0, 2]
+        </div>
+        <div class="complexity-badge badge-green" style="margin-bottom:8px;font-size:10px">Space: O(V+E)</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Best for sparse graphs. Most common in coding interviews. BFS and DFS run in O(V+E).</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#f59e0b;letter-spacing:1px;margin-bottom:10px">ADJACENCY MATRIX</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:10px;color:#f59e0b;line-height:1.8;margin-bottom:10px">
+          &nbsp; 0 1 2 3<br>
+          0[0,1,0,1]<br>
+          1[1,0,1,0]<br>
+          2[0,1,0,1]<br>
+          3[1,0,1,0]
+        </div>
+        <div class="complexity-badge badge-purple" style="margin-bottom:8px;font-size:10px">Space: O(V²)</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">O(1) edge check. Good for dense graphs. Wastes memory for sparse. Next tab shows this in detail.</div>
+      </div>
+      <div style="background:var(--surface2);border:1px solid var(--border);border-radius:10px;padding:16px">
+        <div style="font-family:'Syne',sans-serif;font-size:11px;font-weight:700;color:#c084fc;letter-spacing:1px;margin-bottom:10px">EDGE LIST</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c084fc;line-height:2;margin-bottom:10px">
+          (0,1)<br>
+          (1,2)<br>
+          (2,3)<br>
+          (3,0)
+        </div>
+        <div class="complexity-badge badge-green" style="margin-bottom:8px;font-size:10px">Space: O(E)</div>
+        <div style="font-size:11px;color:var(--text-dim);line-height:1.6">Simplest form. Used in Kruskal's MST (sorted by weight). Edge lookup is O(E).</div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end tab-graphbasics -->
+
+<!-- ════════════════════════════════════════════
+     ADJACENCY MATRIX PANEL
+════════════════════════════════════════════ -->
+<div id="tab-adjmatrix" class="panel">
+
+  <div class="section-heading">Adjacency Matrix</div>
+  <p class="section-sub">A V×V grid where matrix[i][j] = 1 if edge i→j exists, else 0. O(1) edge lookup, O(V²) space. The simplest graph representation — slow for large sparse graphs, perfect for small dense ones.</p>
+
+  <!-- Row 1: Intuition + Complexity -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🧠 Core Intuition</div>
+      <div class="insight insight-cyan" style="margin-bottom:8px">
+        <strong>Think of it as a grid</strong>
+        Row i = source node, column j = destination. Cell [i][j] = 1 means "edge from i to j exists". For weighted graphs, store the weight value instead of 1.
+      </div>
+      <div class="insight insight-purple" style="margin-bottom:8px">
+        <strong>Undirected = Symmetric Matrix</strong>
+        For undirected graphs, matrix[i][j] == matrix[j][i] always. Adding edge (u,v) means setting BOTH cells. The matrix is symmetric across its main diagonal.
+      </div>
+      <div class="insight insight-amber" style="margin-bottom:8px">
+        <strong>Diagonal = Self-loops</strong>
+        matrix[i][i] represents a self-loop at node i. Usually 0. The diagonal cuts the matrix into two triangles — either triangle alone stores all edges of an undirected graph.
+      </div>
+      <div class="insight insight-red" style="background:#1a0505;border-left:4px solid #ef4444;margin-bottom:0">
+        <strong style="color:#ef4444">Memory Warning</strong>
+        V = 1000 → 1M cells. V = 10^5 → 10^10 cells — impossible. Only use adjacency matrix when V is small (under ~1000) or the graph is dense (E close to V²).
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">⚡ Complexity vs Adjacency List</div>
+      <table class="adj-table" style="margin-bottom:16px">
+        <thead>
+          <tr><th>Operation</th><th style="color:#00f5c8">Adj List</th><th style="color:#f59e0b">Adj Matrix</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>Space</td><td style="color:#00f5c8">O(V+E)</td><td style="color:#f59e0b">O(V²)</td></tr>
+          <tr><td>Add Edge</td><td style="color:#00f5c8">O(1)</td><td style="color:#f59e0b">O(1)</td></tr>
+          <tr><td>Edge Check (u,v)?</td><td style="color:#ef4444">O(deg)</td><td style="color:#00f5c8">O(1) ✓</td></tr>
+          <tr><td>Get all neighbors</td><td style="color:#00f5c8">O(deg)</td><td style="color:#ef4444">O(V)</td></tr>
+          <tr><td>BFS / DFS</td><td style="color:#00f5c8">O(V+E)</td><td style="color:#ef4444">O(V²)</td></tr>
+          <tr><td>Remove Edge</td><td style="color:#ef4444">O(deg)</td><td style="color:#00f5c8">O(1)</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex;gap:8px;flex-wrap:wrap">
+        <span class="tag tag-green">O(1) EDGE CHECK</span>
+        <span class="tag tag-amber">O(V²) SPACE</span>
+        <span class="tag tag-purple">SYMMETRIC (undirected)</span>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Interactive Builder -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🎬 Interactive Matrix Builder — Click any cell to toggle an edge</div>
+    <div class="example-selector">
+      <button class="ex-btn active" onclick="adjmSelectExample(0,this)">Undirected Square</button>
+      <button class="ex-btn" onclick="adjmSelectExample(1,this)">Directed Graph</button>
+      <button class="ex-btn" onclick="adjmSelectExample(2,this)">Weighted 5-node</button>
+      <button class="ex-btn" onclick="adjmSelectExample(3,this)">Empty — draw yours</button>
+    </div>
+
+    <div class="grid-2" style="gap:20px;align-items:start">
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;font-family:'JetBrains Mono',monospace">GRAPH VISUALIZATION</div>
+        <canvas id="adjm-canvas" width="340" height="260" style="width:100%;height:260px;background:var(--surface2);border-radius:10px;border:1px solid var(--border);display:block"></canvas>
+        <div class="legend" style="margin-top:10px">
+          <div class="legend-item"><div class="legend-dot" style="background:#003d32;border-color:#00f5c8"></div>Node</div>
+          <div class="legend-item"><div class="legend-dot" style="background:transparent;border-color:#00f5c8"></div>Edge</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#2d2000;border-color:#f59e0b"></div>Last toggled</div>
+        </div>
+        <div style="margin-top:12px">
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;font-family:'JetBrains Mono',monospace">EDGE LIST</div>
+          <div id="adjm-edgelist" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#c084fc;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;min-height:36px;line-height:1.9"></div>
+        </div>
+        <div style="margin-top:10px">
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;font-family:'JetBrains Mono',monospace">DEGREE / IN-DEGREE / OUT-DEGREE</div>
+          <div id="adjm-degree-table" style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;line-height:1.9"></div>
+        </div>
+      </div>
+
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;font-family:'JetBrains Mono',monospace">ADJACENCY MATRIX — click any 0/1 cell to toggle</div>
+        <div id="adjm-matrix-container" style="overflow-x:auto;padding-bottom:4px"></div>
+        <div style="margin-top:14px" id="adjm-props-box">
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:6px;font-family:'JetBrains Mono',monospace">MATRIX PROPERTIES</div>
+          <div id="adjm-props" style="font-family:'JetBrains Mono',monospace;font-size:11px;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;line-height:1.9"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 3: Walkthrough + Flowchart -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <!-- Walkthrough -->
+    <div class="card">
+      <div class="card-title">📋 Step-by-Step — Building a 4-node Matrix</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace">Graph: 0-1, 1-2, 2-3, 3-0 (undirected square)</div>
+
+      <div class="example-step highlight">
+        <div class="step-num">1</div>
+        <div class="step-desc"><strong style="color:var(--accent)">Init:</strong> create 4×4 matrix filled with zeros. <code>int[4][4] matrix</code>.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">2</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Add edge 0-1:</strong> set matrix[0][1]=1 AND matrix[1][0]=1 (undirected → both directions).</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">3</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Add edge 1-2:</strong> matrix[1][2]=1, matrix[2][1]=1.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">4</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Add edge 2-3:</strong> matrix[2][3]=1, matrix[3][2]=1.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">5</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Add edge 3-0:</strong> matrix[3][0]=1, matrix[0][3]=1.</div>
+      </div>
+      <div class="example-step highlight">
+        <div class="step-num">✓</div>
+        <div class="step-desc">Final matrix is symmetric. Degree of each node = row sum = 2.</div>
+      </div>
+
+      <div style="margin-top:14px;padding:12px;background:#0d0d18;border-radius:8px;border:1px solid var(--border)">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8888aa;margin-bottom:8px">Resulting matrix:</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;line-height:2;color:#00f5c8">
+          &nbsp;&nbsp;0&nbsp;1&nbsp;2&nbsp;3<br>
+          0[<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>]<br>
+          1[<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>]<br>
+          2[<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>]<br>
+          3[<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>,<span style="color:#f59e0b">1</span>,<span style="color:#00f5c8">0</span>]
+        </div>
+      </div>
+    </div>
+
+    <!-- Flowchart -->
+    <div class="card">
+      <div class="card-title">📐 How to Read an Adjacency Matrix</div>
+      <svg viewBox="0 0 300 520" style="width:100%;height:auto;display:block">
+        <defs>
+          <marker id="am-fc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+          </marker>
+        </defs>
+        <!-- START -->
+        <ellipse cx="150" cy="24" rx="55" ry="18" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="150" y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">Given matrix[V][V]</text>
+
+        <line x1="150" y1="42" x2="150" y2="58" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- Check edge (u,v) -->
+        <rect x="20" y="58" width="260" height="36" rx="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="150" y="73" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">Does edge (u,v) exist?</text>
+        <text x="150" y="87" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa">Just check: matrix[u][v] != 0</text>
+
+        <line x1="150" y1="94" x2="150" y2="110" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- Diamond -->
+        <polygon points="150,110 260,133 150,156 40,133" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="150" y="129" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">matrix[u][v]</text>
+        <text x="150" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">== 0 ?</text>
+
+        <line x1="260" y1="133" x2="280" y2="133" stroke="#4a5568" stroke-width="1.5"/>
+        <rect x="272" y="122" width="26" height="20" rx="4" fill="#1a0505" stroke="#ef4444" stroke-width="1"/>
+        <text x="285" y="135" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">No edge</text>
+        <text x="264" y="120" font-family="JetBrains Mono" font-size="7" fill="#ef4444">YES</text>
+
+        <line x1="150" y1="156" x2="150" y2="172" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+        <text x="158" y="167" font-family="JetBrains Mono" font-size="7" fill="#6688aa">NO</text>
+        <rect x="30" y="172" width="240" height="28" rx="8" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="150" y="190" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#00f5c8">Edge exists! Weight = matrix[u][v]</text>
+
+        <line x1="150" y1="200" x2="150" y2="218" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- Get all neighbors -->
+        <rect x="20" y="218" width="260" height="36" rx="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="150" y="233" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">Get all neighbors of node u:</text>
+        <text x="150" y="247" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa">loop j=0..V-1, if matrix[u][j] != 0</text>
+
+        <line x1="150" y1="254" x2="150" y2="270" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- Degree -->
+        <rect x="20" y="270" width="260" height="36" rx="8" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="150" y="285" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">Degree of node u:</text>
+        <text x="150" y="299" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa">sum of row u (count non-zeros)</text>
+
+        <line x1="150" y1="306" x2="150" y2="322" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- Symmetric check -->
+        <rect x="20" y="322" width="260" height="36" rx="8" fill="#002d26" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="150" y="337" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#00f5c8">Undirected → symmetric:</text>
+        <text x="150" y="351" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#8888aa">matrix[i][j] == matrix[j][i] always</text>
+
+        <line x1="150" y1="358" x2="150" y2="374" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <!-- BFS on matrix -->
+        <rect x="20" y="374" width="260" height="50" rx="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="150" y="390" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">BFS using adjacency matrix:</text>
+        <text x="150" y="404" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#8888aa">for each dequeued node u, loop j=0..V-1</text>
+        <text x="150" y="416" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#8888aa">if matrix[u][j]!=0 and !visited[j] → enqueue j</text>
+
+        <line x1="150" y1="424" x2="150" y2="440" stroke="#4a5568" stroke-width="1.5" marker-end="url(#am-fc-arr)"/>
+
+        <rect x="20" y="440" width="260" height="28" rx="8" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="150" y="453" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">BFS time = O(V²) — must scan whole row per node</text>
+        <text x="150" y="465" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#8888aa">vs O(V+E) for adjacency list</text>
+      </svg>
+    </div>
+  </div>
+
+  <!-- Row 4: Code -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">💻 Adjacency Matrix — Java &amp; Python</div>
+    <div class="code-tabs">
+      <button class="code-tab active" onclick="switchAdjmCode('java',this)">Java</button>
+      <button class="code-tab" onclick="switchAdjmCode('python',this)">Python</button>
+    </div>
+    <div id="adjm-code-java" class="code-block active">
+<span class="kw">class</span> <span class="cls">Graph</span> {
+    <span class="kw">int</span>[][] matrix;
+    <span class="kw">int</span> V;
+
+    Graph(<span class="kw">int</span> v) {
+        V = v;
+        matrix = <span class="kw">new int</span>[V][V]; <span class="cm">// all 0s by default</span>
+    }
+
+    <span class="cm">// Undirected: set both [u][v] and [v][u]</span>
+    <span class="kw">void</span> <span class="fn">addEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+        matrix[u][v] = <span class="num">1</span>;
+        matrix[v][u] = <span class="num">1</span>;
+    }
+
+    <span class="cm">// Directed: only [u][v]</span>
+    <span class="kw">void</span> <span class="fn">addDirected</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+        matrix[u][v] = <span class="num">1</span>;
+    }
+
+    <span class="cm">// O(1) edge check</span>
+    <span class="kw">boolean</span> <span class="fn">hasEdge</span>(<span class="kw">int</span> u, <span class="kw">int</span> v) {
+        <span class="kw">return</span> matrix[u][v] != <span class="num">0</span>;
+    }
+
+    <span class="cm">// Degree = count of 1s in row u</span>
+    <span class="kw">int</span> <span class="fn">degree</span>(<span class="kw">int</span> u) {
+        <span class="kw">int</span> d = <span class="num">0</span>;
+        <span class="kw">for</span> (<span class="kw">int</span> j = <span class="num">0</span>; j &lt; V; j++) <span class="kw">if</span> (matrix[u][j] != <span class="num">0</span>) d++;
+        <span class="kw">return</span> d;
+    }
+
+    <span class="kw">void</span> <span class="fn">printMatrix</span>() {
+        System.out.print(<span class="str">"   "</span>);
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;V; i++) System.out.printf(<span class="str">"%3d"</span>, i);
+        System.out.println();
+        <span class="kw">for</span> (<span class="kw">int</span> i=<span class="num">0</span>; i&lt;V; i++) {
+            System.out.printf(<span class="str">"%3d"</span>, i);
+            <span class="kw">for</span> (<span class="kw">int</span> j=<span class="num">0</span>; j&lt;V; j++)
+                System.out.printf(<span class="str">"%3d"</span>, matrix[i][j]);
+            System.out.println();
+        }
+    }
+
+    <span class="cm">// BFS on adjacency matrix — O(V²)</span>
+    <span class="kw">void</span> <span class="fn">bfs</span>(<span class="kw">int</span> src) {
+        <span class="kw">boolean</span>[] vis = <span class="kw">new boolean</span>[V];
+        Queue&lt;Integer&gt; q = <span class="kw">new</span> LinkedList&lt;&gt;();
+        vis[src] = <span class="kw">true</span>; q.add(src);
+        <span class="kw">while</span> (!q.isEmpty()) {
+            <span class="kw">int</span> u = q.poll();
+            System.out.print(u + <span class="str">" "</span>);
+            <span class="kw">for</span> (<span class="kw">int</span> j=<span class="num">0</span>; j&lt;V; j++) <span class="cm">// O(V) per node!</span>
+                <span class="kw">if</span> (matrix[u][j]!=<span class="num">0</span> &amp;&amp; !vis[j]) { vis[j]=<span class="kw">true</span>; q.add(j); }
+        }
+    }
+}
+<span class="cm">// Space: O(V²) | addEdge: O(1) | hasEdge: O(1) | BFS: O(V²)</span></div>
+    <div id="adjm-code-python" class="code-block">
+<span class="kw">class</span> <span class="cls">Graph</span>:
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="kw">self</span>, v: <span class="kw">int</span>):
+        <span class="kw">self</span>.V = v
+        <span class="kw">self</span>.matrix = [[<span class="num">0</span>]*v <span class="kw">for</span> _ <span class="kw">in</span> range(v)]
+
+    <span class="kw">def</span> <span class="fn">add_edge</span>(<span class="kw">self</span>, u: <span class="kw">int</span>, v: <span class="kw">int</span>):
+        <span class="cm"># Undirected</span>
+        <span class="kw">self</span>.matrix[u][v] = <span class="num">1</span>
+        <span class="kw">self</span>.matrix[v][u] = <span class="num">1</span>
+
+    <span class="kw">def</span> <span class="fn">add_directed</span>(<span class="kw">self</span>, u: <span class="kw">int</span>, v: <span class="kw">int</span>):
+        <span class="kw">self</span>.matrix[u][v] = <span class="num">1</span>
+
+    <span class="kw">def</span> <span class="fn">has_edge</span>(<span class="kw">self</span>, u: <span class="kw">int</span>, v: <span class="kw">int</span>) -> <span class="kw">bool</span>:
+        <span class="kw">return self</span>.matrix[u][v] != <span class="num">0</span>
+
+    <span class="kw">def</span> <span class="fn">degree</span>(<span class="kw">self</span>, u: <span class="kw">int</span>) -> <span class="kw">int</span>:
+        <span class="kw">return</span> sum(<span class="kw">self</span>.matrix[u])
+
+    <span class="kw">def</span> <span class="fn">print_matrix</span>(<span class="kw">self</span>):
+        print(<span class="str">"   "</span> + <span class="str">"  "</span>.join(str(i) <span class="kw">for</span> i <span class="kw">in</span> range(<span class="kw">self</span>.V)))
+        <span class="kw">for</span> i, row <span class="kw">in</span> enumerate(<span class="kw">self</span>.matrix):
+            print(f<span class="str">"{i:2} "</span> + <span class="str">"  "</span>.join(map(str, row)))
+
+    <span class="kw">def</span> <span class="fn">bfs</span>(<span class="kw">self</span>, src: <span class="kw">int</span>):
+        <span class="kw">from</span> collections <span class="kw">import</span> deque
+        vis = [<span class="kw">False</span>] * <span class="kw">self</span>.V
+        q = deque([src]); vis[src] = <span class="kw">True</span>
+        <span class="kw">while</span> q:
+            u = q.popleft()
+            print(u, end=<span class="str">" "</span>)
+            <span class="kw">for</span> j <span class="kw">in</span> range(<span class="kw">self</span>.V):  <span class="cm"># O(V) — scans whole row</span>
+                <span class="kw">if self</span>.matrix[u][j] <span class="kw">and not</span> vis[j]:
+                    vis[j] = <span class="kw">True</span>; q.append(j)
+
+<span class="cm"># Space O(V²) | addEdge O(1) | hasEdge O(1) | BFS O(V²)</span>
+g = Graph(<span class="num">4</span>)
+g.add_edge(<span class="num">0</span>,<span class="num">1</span>); g.add_edge(<span class="num">1</span>,<span class="num">2</span>)
+g.add_edge(<span class="num">2</span>,<span class="num">3</span>); g.add_edge(<span class="num">3</span>,<span class="num">0</span>)
+g.print_matrix()
+g.bfs(<span class="num">0</span>)  <span class="cm"># 0 1 3 2</span></div>
+  </div>
+
+</div><!-- end tab-adjmatrix -->
+
+
 <div id="tab-bfs" class="panel active">
 
   <div class="section-heading">Breadth First Search</div>
@@ -1095,8 +1894,11 @@ function switchTab(name) {
   if (name === 'toposort1' && ts1Steps.length === 0) ts1ResetAnim();
   if (name === 'courseschedule' && csSteps.length === 0) csResetAnim();
   if (name === 'courseschedule2' && cs2Steps.length === 0) cs2ResetAnim();
-  if (name === 'shortestpath1' && sp1Steps.length === 0) sp1ResetAnim();
-  if (name === 'shortestpathdag' && spdSteps.length === 0) spdResetAnim();
+  if (name === 'shortestpath1' && typeof sp1Steps !== 'undefined' && sp1Steps.length === 0) sp1ResetAnim();
+  if (name === 'shortestpathdag' && typeof spdSteps !== 'undefined' && spdSteps.length === 0) spdResetAnim();
+  if (name === 'dijkstra' && typeof dijkSteps !== 'undefined' && dijkSteps.length === 0) dijkResetAnim();
+  if (name === 'bfsmatrix' && typeof bfsmSteps !== 'undefined' && bfsmSteps.length === 0) bfsmResetAnim();
+  if (name === 'adjmatrix' && typeof adjmSteps !== 'undefined' && adjmSteps.length === 0) adjmResetAnim();
 }
 
 // ═══════════════════════════════════════════
@@ -8998,6 +9800,828 @@ edges = [[<span class="num">0</span>,<span class="num">1</span>],[<span class="n
 
 </div><!-- /tab-shortestpathdag -->
 
+<div id="tab-dijkstra" class="panel">
+  <div class="section-heading">Dijkstra's Algorithm</div>
+  <p class="section-sub">The gold standard for single-source shortest paths on non-negative weighted graphs. Uses a min-heap priority queue to always relax the most promising node first.</p>
+
+  <!-- ── ROW 1: Intuition + Why PQ ── -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🧠 Core Intuition</div>
+      <div class="insight insight-cyan" style="margin-bottom:8px">
+        <strong>The Greedy Guarantee</strong><br>
+        At every step, pick the unvisited node with the smallest known distance. Because all edge weights are ≥ 0, once you settle a node, its distance is final — no shorter path can appear later.
+      </div>
+      <div class="insight insight-purple" style="margin-bottom:8px">
+        <strong>Real-World Analogy</strong><br>
+        GPS navigation. You always expand the cheapest partial-route first. Once a city is "settled", you've found the true shortest route to it.
+      </div>
+      <div class="insight insight-amber">
+        <strong>Why Not BFS Here?</strong><br>
+        BFS finds shortest path only for unit-weight graphs. Dijkstra extends it: instead of a FIFO queue, use a min-heap keyed on <em>cost</em>, not <em>steps</em>.
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🔑 The Priority Queue Insight</div>
+      <div class="why-card">
+        <strong>PQ stores (dist, node) pairs.</strong><br>
+        Always extract the minimum-distance entry. When we extract node <code style="color:#00f5c8">u</code> with dist <code style="color:#00f5c8">d</code>, we know <code style="color:#f59e0b">d = shortest[u]</code>.
+      </div>
+      <div class="why-card">
+        <strong>Lazy deletion pattern.</strong><br>
+        When a node gets a better distance, we push a new <code>(newDist, node)</code> into PQ — we don't remove the old entry. When we pop an outdated entry, we skip it: <code>if d &gt; dist[u]: continue</code>.
+      </div>
+      <div class="why-card">
+        <strong>Why no negative weights?</strong><br>
+        If edges could be negative, a "settled" node might later get a shorter path — breaking the greedy guarantee. Use Bellman-Ford for negative edges.
+      </div>
+    </div>
+  </div>
+
+  <!-- ── ROW 2: Diagram (graph + distance table) ── -->
+  <div class="card col-span-2" style="margin-bottom:20px">
+    <div class="card-title">📐 Diagram — How Relaxation Works</div>
+    <svg viewBox="0 0 820 220" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:220px;background:#1a1a26;border-radius:10px">
+      <defs>
+        <marker id="dijk-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+        </marker>
+        <marker id="dijk-arr-g" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00f5c8"/>
+        </marker>
+        <marker id="dijk-arr-y" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+        </marker>
+      </defs>
+
+      <!-- Static 5-node example graph -->
+      <!-- Nodes: src=0(left), 1(top), 2(right-top), 3(bottom), 4(right-bottom) -->
+      <!-- Positions: 0→(100,110), 1→(260,50), 2→(420,50), 3→(260,170), 4→(420,170) -->
+
+      <!-- Edges (undirected, shown as lines) -->
+      <line x1="122" y1="102" x2="242" y2="62" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="242" y1="62" x2="100" y2="110" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="122" y1="118" x2="242" y2="158" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="242" y1="158" x2="122" y2="118" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="280" y1="50" x2="402" y2="50" stroke="#00f5c8" stroke-width="2" marker-end="url(#dijk-arr-g)"/>
+      <line x1="402" y1="50" x2="280" y2="50" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="280" y1="170" x2="402" y2="170" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="402" y1="170" x2="280" y2="170" stroke="#4a5568" stroke-width="1.5" marker-end="url(#dijk-arr)"/>
+      <line x1="260" y1="68" x2="260" y2="152" stroke="#4a5568" stroke-width="1.5"/>
+      <line x1="420" y1="68" x2="420" y2="152" stroke="#4a5568" stroke-width="1.5"/>
+
+      <!-- Weight labels -->
+      <text x="175" y="65" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#f59e0b" font-weight="700">4</text>
+      <text x="175" y="145" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8888aa" font-weight="700">8</text>
+      <text x="341" y="40" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#00f5c8" font-weight="700">6</text>
+      <text x="341" y="185" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8888aa" font-weight="700">10</text>
+      <text x="248" y="114" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8888aa" font-weight="700">2</text>
+      <text x="432" y="114" text-anchor="middle" font-family="JetBrains Mono" font-size="11" fill="#8888aa" font-weight="700">3</text>
+
+      <!-- Nodes -->
+      <!-- 0: SRC - settled (green) -->
+      <circle cx="100" cy="110" r="24" fill="#003d32" stroke="#00f5c8" stroke-width="2.5"/>
+      <text x="100" y="111" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="#00f5c8">0</text>
+      <text x="100" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#00f5c8" font-weight="700">d=0</text>
+
+      <!-- 1: settled (green) -->
+      <circle cx="260" cy="50" r="24" fill="#003d32" stroke="#00f5c8" stroke-width="2.5"/>
+      <text x="260" y="51" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="#00f5c8">1</text>
+      <text x="260" y="82" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#00f5c8" font-weight="700">d=4</text>
+
+      <!-- 2: CURRENT being relaxed (amber) -->
+      <circle cx="420" cy="50" r="24" fill="#3d2800" stroke="#f59e0b" stroke-width="3"/>
+      <text x="420" y="51" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="#f59e0b">2</text>
+      <text x="420" y="82" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#f59e0b" font-weight="700">d=10</text>
+
+      <!-- 3: in queue (purple) -->
+      <circle cx="260" cy="170" r="24" fill="#1a0d3d" stroke="#7c3aed" stroke-width="2.5"/>
+      <text x="260" y="171" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="#c084fc">3</text>
+      <text x="260" y="202" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#c084fc" font-weight="700">d=12</text>
+
+      <!-- 4: unvisited -->
+      <circle cx="420" cy="170" r="24" fill="#1e1e30" stroke="#2a2a3a" stroke-width="2"/>
+      <text x="420" y="171" text-anchor="middle" dominant-baseline="central" font-family="JetBrains Mono" font-size="13" font-weight="800" fill="#8888aa">4</text>
+      <text x="420" y="202" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#4a5568" font-weight="700">d=∞</text>
+
+      <!-- Legend -->
+      <rect x="540" y="30" width="260" height="160" rx="10" fill="#12121a" stroke="#2a2a3a" stroke-width="1"/>
+      <text x="556" y="55" font-family="Syne, sans-serif" font-size="11" font-weight="700" fill="#8888aa" letter-spacing="1">LEGEND</text>
+      <circle cx="565" cy="78" r="8" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+      <text x="582" y="82" font-family="Space Grotesk, sans-serif" font-size="12" fill="#e8e8f0">Settled (final dist)</text>
+      <circle cx="565" cy="108" r="8" fill="#3d2800" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="582" y="112" font-family="Space Grotesk, sans-serif" font-size="12" fill="#e8e8f0">Currently relaxing</text>
+      <circle cx="565" cy="138" r="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="582" y="142" font-family="Space Grotesk, sans-serif" font-size="12" fill="#e8e8f0">In priority queue</text>
+      <circle cx="565" cy="168" r="8" fill="#1e1e30" stroke="#2a2a3a" stroke-width="1.5"/>
+      <text x="582" y="172" font-family="Space Grotesk, sans-serif" font-size="12" fill="#e8e8f0">Unvisited</text>
+    </svg>
+  </div>
+
+  <!-- ── ROW 3: Flowchart ── -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🔁 Algorithm Flowchart</div>
+    <svg viewBox="0 0 860 280" xmlns="http://www.w3.org/2000/svg" style="width:100%;height:auto;background:#1a1a26;border-radius:10px;padding:8px">
+      <defs>
+        <marker id="fc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+        </marker>
+        <marker id="fc-arr-c" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#00f5c8"/>
+        </marker>
+        <marker id="fc-arr-y" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#f59e0b"/>
+        </marker>
+        <marker id="fc-arr-r" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+          <path d="M0,0 L0,6 L8,3 z" fill="#ef4444"/>
+        </marker>
+      </defs>
+
+      <!-- Box 1: Init -->
+      <rect x="10" y="110" width="130" height="52" rx="8" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+      <text x="75" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#00f5c8" font-weight="700">INIT</text>
+      <text x="75" y="150" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">dist[src]=0</text>
+      <text x="75" y="163" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">push (0, src)</text>
+
+      <!-- Arrow 1→2 -->
+      <line x1="140" y1="136" x2="170" y2="136" stroke="#4a5568" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+
+      <!-- Box 2: PQ empty? -->
+      <polygon points="220,110 290,136 220,162 150,136" fill="#1a1a26" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="220" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc" font-weight="700">PQ</text>
+      <text x="220" y="147" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc" font-weight="700">empty?</text>
+
+      <!-- Yes arrow → Done -->
+      <line x1="220" y1="162" x2="220" y2="220" stroke="#ef4444" stroke-width="1.5" marker-end="url(#fc-arr-r)"/>
+      <text x="230" y="196" font-family="JetBrains Mono" font-size="9" fill="#ef4444">YES</text>
+      <rect x="160" y="220" width="120" height="42" rx="8" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+      <text x="220" y="238" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#ef4444" font-weight="700">DONE</text>
+      <text x="220" y="254" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">return dist[]</text>
+
+      <!-- No arrow → Pop min -->
+      <line x1="290" y1="136" x2="330" y2="136" stroke="#4a5568" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+      <text x="310" y="128" font-family="JetBrains Mono" font-size="9" fill="#8888aa">NO</text>
+
+      <!-- Box 3: Pop (d,u) -->
+      <rect x="330" y="110" width="130" height="52" rx="8" fill="#2d1b69" stroke="#7c3aed" stroke-width="1.5"/>
+      <text x="395" y="133" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#c084fc" font-weight="700">POP MIN</text>
+      <text x="395" y="150" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">(d, u) = pq.pop()</text>
+
+      <!-- Arrow 3→4 -->
+      <line x1="460" y1="136" x2="490" y2="136" stroke="#4a5568" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+
+      <!-- Box 4: d > dist[u]? -->
+      <polygon points="555,110 625,136 555,162 485,136" fill="#1a1a26" stroke="#f59e0b" stroke-width="1.5"/>
+      <text x="555" y="130" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b" font-weight="700">d &gt;</text>
+      <text x="555" y="143" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b" font-weight="700">dist[u]?</text>
+
+      <!-- YES → skip back to PQ -->
+      <line x1="555" y1="162" x2="555" y2="230" stroke="#f59e0b" stroke-width="1.5"/>
+      <line x1="555" y1="230" x2="220" y2="230" stroke="#f59e0b" stroke-width="1.5"/>
+      <line x1="220" y1="230" x2="220" y2="162" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#fc-arr-y)"/>
+      <text x="455" y="246" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">STALE — SKIP</text>
+
+      <!-- NO arrow → Relax -->
+      <line x1="625" y1="136" x2="660" y2="136" stroke="#4a5568" stroke-width="1.5" marker-end="url(#fc-arr)"/>
+      <text x="642" y="128" font-family="JetBrains Mono" font-size="9" fill="#8888aa">NO</text>
+
+      <!-- Box 5: Relax neighbors -->
+      <rect x="660" y="100" width="150" height="72" rx="8" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+      <text x="735" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="10" fill="#00f5c8" font-weight="700">RELAX NEIGHBORS</text>
+      <text x="735" y="138" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">for (v,w) in adj[u]:</text>
+      <text x="735" y="152" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#e8e8f0">if d+w &lt; dist[v]:</text>
+      <text x="735" y="165" text-anchor="middle" font-family="Space Grotesk" font-size="10" fill="#00f5c8">  push (d+w, v)</text>
+
+      <!-- Loop back from relax to PQ check -->
+      <line x1="735" y1="172" x2="735" y2="210" stroke="#00f5c8" stroke-width="1.5"/>
+      <line x1="735" y1="210" x2="820" y2="210" stroke="#00f5c8" stroke-width="1.5"/>
+      <line x1="820" y1="210" x2="820" y2="50" stroke="#00f5c8" stroke-width="1.5"/>
+      <line x1="820" y1="50" x2="220" y2="50" stroke="#00f5c8" stroke-width="1.5"/>
+      <line x1="220" y1="50" x2="220" y2="110" stroke="#00f5c8" stroke-width="1.5" marker-end="url(#fc-arr-c)"/>
+      <text x="740" y="200" font-family="JetBrains Mono" font-size="8" fill="#00f5c8">loop back</text>
+    </svg>
+  </div>
+
+  <!-- ── ROW 4: Animated Visualizer ── -->
+  <div class="card col-span-2" style="margin-bottom:20px">
+    <div class="card-title">🎬 Step-by-Step Animation</div>
+    <div class="example-selector" id="dijk-example-selector">
+      <button class="ex-btn active" onclick="switchDijkExample(0,this)">Example 1 — 3 nodes</button>
+      <button class="ex-btn" onclick="switchDijkExample(1,this)">Example 2 — 5 nodes</button>
+      <button class="ex-btn" onclick="switchDijkExample(2,this)">Example 3 — Rich graph</button>
+    </div>
+
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:14px">
+      <!-- SVG graph -->
+      <div>
+        <svg id="dijk-canvas" viewBox="0 0 400 260" xmlns="http://www.w3.org/2000/svg"
+          style="width:100%;height:260px;background:#1a1a26;border-radius:10px;border:1px solid #2a2a3a">
+          <defs>
+            <marker id="dijk-anim-arr" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#4a5568"/>
+            </marker>
+            <marker id="dijk-anim-arr-g" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#00f5c8"/>
+            </marker>
+            <marker id="dijk-anim-arr-y" markerWidth="7" markerHeight="7" refX="5" refY="3" orient="auto">
+              <path d="M0,0 L0,6 L7,3 z" fill="#f59e0b"/>
+            </marker>
+          </defs>
+          <g id="dijk-edges-g"></g>
+          <g id="dijk-nodes-g"></g>
+        </svg>
+      </div>
+
+      <!-- State panel -->
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <!-- Phase indicator -->
+        <div style="padding:10px 14px;background:#12121a;border-radius:8px;border:1px solid #2a2a3a">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#8888aa;letter-spacing:1px;margin-bottom:4px">STATUS</div>
+          <div id="dijk-phase-text" style="font-family:'Syne',sans-serif;font-size:15px;font-weight:800;color:var(--text-dim)">Ready</div>
+        </div>
+
+        <!-- Priority Queue display -->
+        <div style="padding:10px 14px;background:#12121a;border-radius:8px;border:1px solid #2a2a3a">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#c084fc;letter-spacing:1px;margin-bottom:6px">MIN-HEAP PRIORITY QUEUE</div>
+          <div id="dijk-pq-display" style="display:flex;flex-wrap:wrap;gap:6px;min-height:36px;align-items:center">
+            <span style="color:#4a5568;font-family:'JetBrains Mono',monospace;font-size:11px">empty</span>
+          </div>
+        </div>
+
+        <!-- Distance array display -->
+        <div style="padding:10px 14px;background:#12121a;border-radius:8px;border:1px solid #2a2a3a">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#00f5c8;letter-spacing:1px;margin-bottom:6px">DIST ARRAY</div>
+          <div id="dijk-dist-display" style="display:flex;gap:6px;flex-wrap:wrap;align-items:center"></div>
+        </div>
+
+        <!-- Relaxation log -->
+        <div style="padding:10px 14px;background:#12121a;border-radius:8px;border:1px solid #2a2a3a">
+          <div style="font-family:'JetBrains Mono',monospace;font-size:9px;color:#f59e0b;letter-spacing:1px;margin-bottom:4px">LAST RELAXATION</div>
+          <div id="dijk-relax-display" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim)">–</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Progress bar -->
+    <div style="height:4px;background:#1a1a26;border-radius:2px;margin-bottom:10px">
+      <div id="dijk-progress-fill" style="height:4px;background:linear-gradient(90deg,#00f5c8,#7c3aed);border-radius:2px;width:0%;transition:width 0.3s"></div>
+    </div>
+
+    <!-- Controls -->
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">
+      <button class="ctrl-btn" onclick="dijkResetAnim()">⟳ RESET</button>
+      <button class="ctrl-btn" id="dijk-play-btn" onclick="dijkTogglePlay()">▶ PLAY</button>
+      <button class="ctrl-btn" onclick="dijkStepForward()">→ STEP</button>
+      <select id="dijk-speed-select" class="ctrl-btn" style="cursor:pointer">
+        <option value="1200">Slow</option>
+        <option value="700" selected>Normal</option>
+        <option value="350">Fast</option>
+      </select>
+      <span id="dijk-step-counter" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:#8888aa;margin-left:4px"></span>
+    </div>
+
+    <!-- Step log -->
+    <div id="dijk-step-log" style="margin-top:12px;max-height:130px;overflow-y:auto;background:#0a0a0f;border-radius:8px;padding:8px;border:1px solid #1a1a26;font-family:'JetBrains Mono',monospace;font-size:11px;line-height:1.8"></div>
+  </div>
+
+  <!-- ── ROW 5: Walkthrough ── -->
+  <div class="card col-span-2" style="margin-bottom:20px">
+    <div class="card-title">🚶 Example Walkthrough — V=3, edges=[[0,1,1],[1,2,3],[0,2,6]], src=2</div>
+    <div style="overflow-x:auto">
+      <table style="width:100%;border-collapse:collapse;font-family:'JetBrains Mono',monospace;font-size:12px">
+        <thead>
+          <tr style="border-bottom:1px solid #2a2a3a">
+            <th style="padding:10px;color:#8888aa;text-align:left;font-size:10px;letter-spacing:1px">STEP</th>
+            <th style="padding:10px;color:#c084fc;text-align:left;font-size:10px;letter-spacing:1px">ACTION</th>
+            <th style="padding:10px;color:#f59e0b;text-align:left;font-size:10px;letter-spacing:1px">PQ STATE</th>
+            <th style="padding:10px;color:#00f5c8;text-align:left;font-size:10px;letter-spacing:1px">dist[]</th>
+            <th style="padding:10px;color:#8888aa;text-align:left;font-size:10px;letter-spacing:1px">NOTE</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr style="border-bottom:1px solid #1a1a26">
+            <td style="padding:10px;color:#8888aa">0</td>
+            <td style="padding:10px;color:#e8e8f0">Init. src=2</td>
+            <td style="padding:10px;color:#f59e0b">[(0,2)]</td>
+            <td style="padding:10px;color:#00f5c8">[∞, ∞, 0]</td>
+            <td style="padding:10px;color:#8888aa">push (0,src)</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26;background:#12121a">
+            <td style="padding:10px;color:#8888aa">1</td>
+            <td style="padding:10px;color:#e8e8f0">Pop (0,2)</td>
+            <td style="padding:10px;color:#f59e0b">[]</td>
+            <td style="padding:10px;color:#00f5c8">[∞, ∞, 0]</td>
+            <td style="padding:10px;color:#8888aa">settle node 2</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26">
+            <td style="padding:10px;color:#8888aa">2</td>
+            <td style="padding:10px;color:#e8e8f0">Relax 2→1 (w=3)</td>
+            <td style="padding:10px;color:#f59e0b">[(3,1)]</td>
+            <td style="padding:10px;color:#00f5c8">[∞, <span style="color:#c084fc">3</span>, 0]</td>
+            <td style="padding:10px;color:#8888aa">0+3=3 &lt; ∞ ✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26;background:#12121a">
+            <td style="padding:10px;color:#8888aa">3</td>
+            <td style="padding:10px;color:#e8e8f0">Relax 2→0 (w=6)</td>
+            <td style="padding:10px;color:#f59e0b">[(3,1),(6,0)]</td>
+            <td style="padding:10px;color:#00f5c8">[<span style="color:#c084fc">6</span>, 3, 0]</td>
+            <td style="padding:10px;color:#8888aa">0+6=6 &lt; ∞ ✓</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26">
+            <td style="padding:10px;color:#8888aa">4</td>
+            <td style="padding:10px;color:#e8e8f0">Pop (3,1)</td>
+            <td style="padding:10px;color:#f59e0b">[(6,0)]</td>
+            <td style="padding:10px;color:#00f5c8">[6, 3, 0]</td>
+            <td style="padding:10px;color:#8888aa">settle node 1</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26;background:#12121a">
+            <td style="padding:10px;color:#8888aa">5</td>
+            <td style="padding:10px;color:#e8e8f0">Relax 1→0 (w=1)</td>
+            <td style="padding:10px;color:#f59e0b">[(4,0),(6,0)]</td>
+            <td style="padding:10px;color:#00f5c8">[<span style="color:#00f5c8">4</span>, 3, 0]</td>
+            <td style="padding:10px;color:#8888aa">3+1=4 &lt; 6 ✓ updated!</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26">
+            <td style="padding:10px;color:#8888aa">6</td>
+            <td style="padding:10px;color:#e8e8f0">Pop (4,0)</td>
+            <td style="padding:10px;color:#f59e0b">[(6,0)]</td>
+            <td style="padding:10px;color:#00f5c8">[4, 3, 0]</td>
+            <td style="padding:10px;color:#8888aa">settle node 0</td>
+          </tr>
+          <tr style="border-bottom:1px solid #1a1a26;background:#12121a">
+            <td style="padding:10px;color:#8888aa">7</td>
+            <td style="padding:10px;color:#e8e8f0">Pop (6,0)</td>
+            <td style="padding:10px;color:#f59e0b">[]</td>
+            <td style="padding:10px;color:#00f5c8">[4, 3, 0]</td>
+            <td style="padding:10px;color:#4a5568">6 &gt; dist[0]=4 → STALE SKIP</td>
+          </tr>
+          <tr>
+            <td style="padding:10px;color:#8888aa">8</td>
+            <td style="padding:10px;color:#00f5c8">✓ Done</td>
+            <td style="padding:10px;color:#f59e0b">[]</td>
+            <td style="padding:10px;color:#00f5c8">[4, 3, 0]</td>
+            <td style="padding:10px;color:#00f5c8">Output: [4, 3, 0]</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+
+  <!-- ── ROW 6: Code ── -->
+  <div class="card col-span-2" style="margin-bottom:20px">
+    <div class="card-title">💻 Implementation</div>
+    <div style="display:flex;gap:8px;margin-bottom:14px">
+      <button class="code-tab active" onclick="switchDijkCode('java',this)">Java</button>
+      <button class="code-tab" onclick="switchDijkCode('python',this)">Python</button>
+    </div>
+
+    <pre class="code-block active" id="dijk-code-java"><code><span class="kw">import</span> java.util.*;
+
+<span class="kw">class</span> <span class="fn">Solution</span> {
+    <span class="kw">public</span> <span class="kw">int</span>[] <span class="fn">dijkstra</span>(<span class="kw">int</span> V, <span class="kw">int</span>[][] edges, <span class="kw">int</span> src) {
+        <span class="cm">// Build adjacency list</span>
+        List&lt;int[]&gt;[] adj = <span class="kw">new</span> List[V];
+        <span class="kw">for</span> (<span class="kw">int</span> i = <span class="num">0</span>; i &lt; V; i++) adj[i] = <span class="kw">new</span> ArrayList&lt;&gt;();
+        <span class="kw">for</span> (<span class="kw">int</span>[] e : edges) {
+            adj[e[<span class="num">0</span>]].add(<span class="kw">new</span> <span class="kw">int</span>[]{e[<span class="num">1</span>], e[<span class="num">2</span>]});
+            adj[e[<span class="num">1</span>]].add(<span class="kw">new</span> <span class="kw">int</span>[]{e[<span class="num">0</span>], e[<span class="num">2</span>]});  <span class="cm">// undirected</span>
+        }
+
+        <span class="kw">int</span>[] dist = <span class="kw">new</span> <span class="kw">int</span>[V];
+        Arrays.fill(dist, Integer.MAX_VALUE);
+        dist[src] = <span class="num">0</span>;
+
+        <span class="cm">// Min-heap: {dist, node}</span>
+        PriorityQueue&lt;<span class="kw">int</span>[]&gt; pq = <span class="kw">new</span> PriorityQueue&lt;&gt;((a, b) -&gt; a[<span class="num">0</span>] - b[<span class="num">0</span>]);
+        pq.offer(<span class="kw">new</span> <span class="kw">int</span>[]{<span class="num">0</span>, src});
+
+        <span class="kw">while</span> (!pq.isEmpty()) {
+            <span class="kw">int</span>[] top = pq.poll();
+            <span class="kw">int</span> d = top[<span class="num">0</span>], u = top[<span class="num">1</span>];
+
+            <span class="cm">// Lazy deletion: skip stale entries</span>
+            <span class="kw">if</span> (d &gt; dist[u]) <span class="kw">continue</span>;
+
+            <span class="kw">for</span> (<span class="kw">int</span>[] nb : adj[u]) {
+                <span class="kw">int</span> v = nb[<span class="num">0</span>], w = nb[<span class="num">1</span>];
+                <span class="kw">if</span> (dist[u] + w &lt; dist[v]) {
+                    dist[v] = dist[u] + w;
+                    pq.offer(<span class="kw">new</span> <span class="kw">int</span>[]{dist[v], v});
+                }
+            }
+        }
+        <span class="kw">return</span> dist;
+    }
+}
+
+<span class="cm">// Time:  O((V + E) log V)  — each node/edge processed once via PQ
+// Space: O(V + E)          — adjacency list + dist array + PQ</span></code></pre>
+
+    <pre class="code-block" id="dijk-code-python" style="display:none"><code><span class="kw">import</span> heapq
+
+<span class="kw">class</span> <span class="fn">Solution</span>:
+    <span class="kw">def</span> <span class="fn">dijkstra</span>(self, V: <span class="kw">int</span>, edges: list[list[<span class="kw">int</span>]], src: <span class="kw">int</span>) -&gt; list[<span class="kw">int</span>]:
+        <span class="cm"># Build adjacency list</span>
+        adj = [[] <span class="kw">for</span> _ <span class="kw">in</span> range(V)]
+        <span class="kw">for</span> u, v, w <span class="kw">in</span> edges:
+            adj[u].append((v, w))
+            adj[v].append((u, w))  <span class="cm"># undirected</span>
+
+        dist = [float(<span class="str">'inf'</span>)] * V
+        dist[src] = <span class="num">0</span>
+
+        <span class="cm"># Min-heap: (dist, node)</span>
+        pq = [(<span class="num">0</span>, src)]
+
+        <span class="kw">while</span> pq:
+            d, u = heapq.heappop(pq)
+
+            <span class="cm"># Lazy deletion: skip stale entries</span>
+            <span class="kw">if</span> d &gt; dist[u]:
+                <span class="kw">continue</span>
+
+            <span class="kw">for</span> v, w <span class="kw">in</span> adj[u]:
+                <span class="kw">if</span> dist[u] + w &lt; dist[v]:
+                    dist[v] = dist[u] + w
+                    heapq.heappush(pq, (dist[v], v))
+
+        <span class="kw">return</span> dist
+
+<span class="cm"># Time:  O((V + E) log V)  — each node/edge processed once via PQ
+# Space: O(V + E)          — adjacency list + dist array + heap</span></code></pre>
+  </div>
+
+  <!-- ── ROW 7: Complexity ── -->
+  <div class="card col-span-2" style="margin-bottom:20px">
+    <div class="card-title">⚡ Complexity Analysis</div>
+    <div class="complexity-row-dijk">
+      <div class="complexity-badge-dijk">
+        <span class="cb-label">Time Complexity</span>
+        <span class="cb-val">O((V+E) log V)</span>
+        <span class="cb-why">Each node popped once (V pops × log V). Each edge relaxed once (E pushes × log V). Dominates at E log V.</span>
+      </div>
+      <div class="complexity-badge-dijk">
+        <span class="cb-label">Space Complexity</span>
+        <span class="cb-val">O(V + E)</span>
+        <span class="cb-why">Adjacency list O(V+E), dist[] O(V), priority queue up to O(E) entries in worst case with lazy deletion.</span>
+      </div>
+      <div class="complexity-badge-dijk">
+        <span class="cb-label">Constraint Fit</span>
+        <span class="cb-val">V, E ≤ 10⁶</span>
+        <span class="cb-why">10⁶ × 20 ≈ 2×10⁷ ops — fits within typical 1–2s limits. Use adjacency list, never matrix at this scale.</span>
+      </div>
+    </div>
+
+    <div style="margin-top:16px;display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="why-card">
+        <strong>Why not Bellman-Ford?</strong><br>
+        Bellman-Ford is O(V·E) — at V=E=10⁶ that's 10¹² ops, completely infeasible. Dijkstra's PQ-based approach is strictly better when no negative weights exist.
+      </div>
+      <div class="why-card">
+        <strong>When Dijkstra fails?</strong><br>
+        Negative weight edges break the greedy guarantee — a settled node could later receive a cheaper path. Use <strong>Bellman-Ford</strong> (negative edges) or <strong>SPFA</strong> as alternatives.
+      </div>
+      <div class="why-card">
+        <strong>Lazy vs Eager deletion?</strong><br>
+        Lazy deletion (push duplicate, skip stale) is simpler to implement and often faster in practice. Eager deletion with a decrease-key Fibonacci heap gives O((V+E) + V log V) but is complex.
+      </div>
+      <div class="why-card">
+        <strong>Compared to Shortest Path in DAG?</strong><br>
+        DAG approach (topo sort + relax) is O(V+E) — faster! But requires no cycles. Dijkstra works on any graph with non-negative weights, with or without cycles.
+      </div>
+    </div>
+  </div>
+
+</div><!-- end tab-dijkstra -->
+
+<!-- ════════════════════════════════════════════
+     SHORTEST PATH IN BINARY MATRIX PANEL
+════════════════════════════════════════════ -->
+<div id="tab-bfsmatrix" class="panel">
+
+  <div class="section-heading">Shortest Path in Binary Matrix</div>
+  <p class="section-sub">LeetCode 1091 · Medium — BFS on a grid with 8-directional movement. Every valid cell costs 1 step, so BFS always finds the shortest path first.</p>
+
+  <!-- Row 1: Intuition + Complexity -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">🧠 Core Intuition</div>
+      <div class="insight insight-cyan" style="margin-bottom:8px">
+        <strong>Why BFS, Not DFS?</strong>
+        BFS explores level by level. The first time it reaches (n-1,n-1), that IS the shortest path. DFS may find a path but never guarantees the shortest.
+      </div>
+      <div class="insight insight-purple" style="margin-bottom:8px">
+        <strong>8 Directions — The Key Twist</strong>
+        Unlike classic 4-dir grid BFS, diagonals count here. One step can move in any of 8 directions, enabling shorter diagonal paths.
+      </div>
+      <div class="insight insight-amber">
+        <strong>Length = Cells Visited (Not Edges)</strong>
+        A 2x2 clear grid: path (0,0) to (1,1) visits 2 cells — answer is 2, not 1.
+      </div>
+    </div>
+    <div class="card">
+      <div class="card-title">⚡ Complexity</div>
+      <div style="display:flex;flex-direction:column;gap:12px">
+        <div>
+          <div class="complexity-badge badge-green" style="margin-bottom:8px">TIME: O(N^2)</div>
+          <p style="font-size:12px;color:var(--text-dim);line-height:1.6">N^2 cells, each visited once. 8 neighbor checks each = O(N^2).</p>
+        </div>
+        <div>
+          <div class="complexity-badge badge-purple" style="margin-bottom:8px">SPACE: O(N^2)</div>
+          <p style="font-size:12px;color:var(--text-dim);line-height:1.6">Queue holds at most O(N^2) entries. In-place visited marking saves extra space.</p>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <span class="tag tag-green">BFS OPTIMAL</span>
+          <span class="tag tag-purple">8-DIRECTIONAL</span>
+          <span class="tag tag-amber">GRID PROBLEM</span>
+        </div>
+        <div class="insight insight-red" style="background:#1a0505;border-left:4px solid #ef4444;margin-bottom:0">
+          <strong style="color:#ef4444">Edge Case First!</strong>
+          If grid[0][0]==1 or grid[n-1][n-1]==1, return -1 immediately.
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 2: Animation -->
+  <div class="card" style="margin-bottom:20px">
+    <div class="card-title">🎬 Live BFS Animation</div>
+    <div class="example-selector">
+      <button class="ex-btn active" onclick="bfsmSelectExample(0,this)">Ex 1: 2x2 ans=2</button>
+      <button class="ex-btn" onclick="bfsmSelectExample(1,this)">Ex 2: 3x3 ans=4</button>
+      <button class="ex-btn" onclick="bfsmSelectExample(2,this)">Ex 3: blocked=-1</button>
+      <button class="ex-btn" onclick="bfsmSelectExample(3,this)">Ex 4: 5x5</button>
+    </div>
+    <div class="grid-2" style="gap:16px">
+      <div>
+        <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:8px;font-family:'JetBrains Mono',monospace">GRID — BFS from S to E (8-directional)</div>
+        <div id="bfsm-grid-container" style="display:inline-block;border:1px solid var(--border);border-radius:8px;background:var(--surface2);padding:8px"></div>
+        <div class="legend" style="margin-top:12px">
+          <div class="legend-item"><div class="legend-dot" style="background:#3d2800;border-color:#f59e0b"></div>Current</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#003d2a;border-color:#00f5c8"></div>Visited</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1e1e30;border-color:#3a3a50"></div>Clear (0)</div>
+          <div class="legend-item"><div class="legend-dot" style="background:#1a0505;border-color:#4a1a1a"></div>Blocked (1)</div>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:10px">
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:5px;font-family:'JetBrains Mono',monospace">QUEUE (row, col, dist)</div>
+          <div id="bfsm-queue-display" style="display:flex;gap:4px;flex-wrap:wrap;min-height:40px;padding:8px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;align-items:center"></div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:5px;font-family:'JetBrains Mono',monospace">CURRENT CELL</div>
+          <div id="bfsm-current-display" style="font-family:'JetBrains Mono',monospace;font-size:13px;font-weight:700;color:#f59e0b;padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">-</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:5px;font-family:'JetBrains Mono',monospace">STEP INFO</div>
+          <div id="bfsm-step-info" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--text-dim);padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;line-height:1.6">-</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:5px;font-family:'JetBrains Mono',monospace">RESULT</div>
+          <div id="bfsm-result-display" style="font-family:'JetBrains Mono',monospace;font-size:16px;font-weight:800;color:var(--text-dim);padding:8px 12px;background:var(--surface2);border:1px solid var(--border);border-radius:8px">waiting</div>
+        </div>
+        <div>
+          <div style="font-size:10px;color:var(--text-dim);letter-spacing:1px;margin-bottom:5px;font-family:'JetBrains Mono',monospace">STEP LOG</div>
+          <div class="step-log" id="bfsm-step-log"></div>
+        </div>
+      </div>
+    </div>
+    <div class="progress-bar-wrap" style="margin-top:16px"><div class="progress-bar-fill" id="bfsm-progress-fill"></div></div>
+    <div class="controls" style="margin-top:12px">
+      <button class="btn btn-primary" id="bfsm-play-btn" onclick="bfsmTogglePlay()">&#9654; PLAY</button>
+      <button class="btn btn-secondary" onclick="bfsmStepForward()">STEP</button>
+      <button class="btn btn-secondary" onclick="bfsmResetAnim()">RESET</button>
+      <select class="speed-select" id="bfsm-speed-select">
+        <option value="1200">Slow</option>
+        <option value="700" selected>Normal</option>
+        <option value="300">Fast</option>
+      </select>
+    </div>
+  </div>
+
+  <!-- Row 3: Flowchart + Walkthrough -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">📐 Algorithm Flowchart</div>
+      <svg viewBox="0 0 320 600" style="width:100%;height:auto;display:block">
+        <defs>
+          <marker id="bfsm-fc-arr" markerWidth="8" markerHeight="8" refX="6" refY="3" orient="auto">
+            <path d="M0,0 L0,6 L8,3 z" fill="#4a5568"/>
+          </marker>
+        </defs>
+        <ellipse cx="160" cy="24" rx="55" ry="18" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="160" y="29" text-anchor="middle" font-family="JetBrains Mono" font-size="11" font-weight="700" fill="#00f5c8">START</text>
+        <line x1="160" y1="42" x2="160" y2="56" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <rect x="30" y="56" width="260" height="36" rx="8" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="160" y="72" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#ef4444">start blocked OR end blocked?</text>
+        <text x="160" y="86" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#666688">grid[0][0]==1 or grid[n-1][n-1]==1</text>
+        <line x1="290" y1="74" x2="310" y2="74" stroke="#ef4444" stroke-width="1.5"/>
+        <rect x="298" y="64" width="22" height="18" rx="4" fill="#1a0505" stroke="#ef4444" stroke-width="1"/>
+        <text x="309" y="76" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#ef4444">-1</text>
+        <text x="293" y="64" font-family="JetBrains Mono" font-size="7" fill="#ef4444">YES</text>
+        <line x1="160" y1="92" x2="160" y2="106" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="167" y="102" font-family="JetBrains Mono" font-size="8" fill="#6688aa">NO</text>
+        <rect x="30" y="106" width="260" height="36" rx="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="160" y="122" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">queue = [(0,0, dist=1)]</text>
+        <text x="160" y="136" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#666688">mark grid[0][0] visited</text>
+        <line x1="160" y1="142" x2="160" y2="156" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <polygon points="160,156 282,180 160,204 38,180" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="160" y="176" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">queue</text>
+        <text x="160" y="190" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">empty?</text>
+        <line x1="38" y1="180" x2="12" y2="180" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="12" y1="180" x2="12" y2="568" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="12" y1="568" x2="112" y2="568" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="3" y="177" font-family="JetBrains Mono" font-size="7" fill="#ef4444">Y</text>
+        <line x1="160" y1="204" x2="160" y2="218" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="167" y="214" font-family="JetBrains Mono" font-size="8" fill="#6688aa">N</text>
+        <rect x="40" y="218" width="240" height="28" rx="8" fill="#3d2800" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="160" y="236" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">dequeue (r, c, dist)</text>
+        <line x1="160" y1="246" x2="160" y2="260" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <polygon points="160,260 282,282 160,304 38,282" fill="#002d26" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="160" y="278" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#00f5c8">(r,c) ==</text>
+        <text x="160" y="293" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#00f5c8">(n-1,n-1)?</text>
+        <line x1="282" y1="282" x2="308" y2="282" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="308" y1="282" x2="308" y2="548" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="308" y1="548" x2="216" y2="548" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="288" y="276" font-family="JetBrains Mono" font-size="7" fill="#00f5c8">YES</text>
+        <line x1="160" y1="304" x2="160" y2="318" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="167" y="314" font-family="JetBrains Mono" font-size="8" fill="#6688aa">NO</text>
+        <rect x="20" y="318" width="280" height="36" rx="8" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+        <text x="160" y="334" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">for each of 8 dirs (dr,dc):</text>
+        <text x="160" y="348" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#666688">nr=r+dr, nc=c+dc</text>
+        <line x1="160" y1="354" x2="160" y2="368" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <polygon points="160,368 282,390 160,412 38,390" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="160" y="386" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">in bounds and</text>
+        <text x="160" y="400" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#f59e0b">grid[nr][nc]==0?</text>
+        <line x1="38" y1="390" x2="14" y2="390" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="14" y1="390" x2="14" y2="166" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="14" y1="166" x2="38" y2="166" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="3" y="387" font-family="JetBrains Mono" font-size="7" fill="#4a5568">N</text>
+        <line x1="160" y1="412" x2="160" y2="426" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <text x="167" y="422" font-family="JetBrains Mono" font-size="8" fill="#6688aa">Y</text>
+        <rect x="30" y="426" width="260" height="36" rx="8" fill="#1a1000" stroke="#f59e0b" stroke-width="1.5"/>
+        <text x="160" y="442" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#f59e0b">mark visited</text>
+        <text x="160" y="456" text-anchor="middle" font-family="JetBrains Mono" font-size="8" fill="#888">enqueue (nr, nc, dist+1)</text>
+        <line x1="160" y1="462" x2="160" y2="476" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="160" y1="476" x2="322" y2="476" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="322" y1="476" x2="322" y2="166" stroke="#4a5568" stroke-width="1.5"/>
+        <line x1="322" y1="166" x2="282" y2="166" stroke="#4a5568" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+        <rect x="112" y="536" width="96" height="24" rx="6" fill="#003d32" stroke="#00f5c8" stroke-width="1.5"/>
+        <text x="160" y="552" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#00f5c8">return dist</text>
+        <rect x="112" y="564" width="96" height="24" rx="6" fill="#1a0505" stroke="#ef4444" stroke-width="1.5"/>
+        <text x="160" y="580" text-anchor="middle" font-family="JetBrains Mono" font-size="9" font-weight="700" fill="#ef4444">return -1</text>
+      </svg>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Example 2 Walkthrough — 3x3, ans=4</div>
+      <div style="font-size:11px;color:var(--text-dim);margin-bottom:14px;font-family:'JetBrains Mono',monospace">grid = [[0,0,0],[1,1,0],[1,1,0]]</div>
+      <div style="display:grid;grid-template-columns:repeat(3,38px);gap:3px;margin-bottom:16px">
+        <div style="width:38px;height:38px;background:#1a2a1a;border:2px solid #00f5c8;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;font-weight:700;color:#00f5c8">S</div>
+        <div style="width:38px;height:38px;background:#1e1e30;border:1.5px solid #3a3a50;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8888aa">0</div>
+        <div style="width:38px;height:38px;background:#1e1e30;border:1.5px solid #3a3a50;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8888aa">0</div>
+        <div style="width:38px;height:38px;background:#1a0505;border:1.5px solid #4a1a1a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4a5568">1</div>
+        <div style="width:38px;height:38px;background:#1a0505;border:1.5px solid #4a1a1a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4a5568">1</div>
+        <div style="width:38px;height:38px;background:#1e1e30;border:1.5px solid #3a3a50;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#8888aa">0</div>
+        <div style="width:38px;height:38px;background:#1a0505;border:1.5px solid #4a1a1a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4a5568">1</div>
+        <div style="width:38px;height:38px;background:#1a0505;border:1.5px solid #4a1a1a;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:12px;color:#4a5568">1</div>
+        <div style="width:38px;height:38px;background:#1e1e30;border:2px solid #7c3aed;border-radius:5px;display:flex;align-items:center;justify-content:center;font-family:'JetBrains Mono',monospace;font-size:10px;color:#c084fc">E</div>
+      </div>
+      <div class="example-step highlight">
+        <div class="step-num">1</div>
+        <div class="step-desc"><strong style="color:var(--accent)">Init:</strong> queue=<code>[(0,0,1)]</code>. Mark (0,0) visited.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">2</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Pop (0,0,1).</strong> Not target. Valid neighbors: <code>(0,1)</code>. Enqueue <code>(0,1,2)</code>.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">3</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Pop (0,1,2).</strong> Valid: <code>(0,2)</code> and <code>(1,2)</code>. Both enqueued at dist=3.</div>
+      </div>
+      <div class="example-step">
+        <div class="step-num">4</div>
+        <div class="step-desc"><strong style="color:#f59e0b">Pop (1,2,3).</strong> Valid: <code>(2,2)</code>. Enqueue <code>(2,2,4)</code>.</div>
+      </div>
+      <div class="example-step highlight">
+        <div class="step-num">5</div>
+        <div class="step-desc"><strong style="color:var(--accent)">Pop (2,2,4).</strong> This IS (n-1,n-1)! Return <strong style="color:var(--accent)">4</strong>.</div>
+      </div>
+      <div style="margin-top:12px;padding:12px;background:#002d26;border-radius:8px;border:1px solid var(--accent)">
+        <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--accent);font-weight:700;margin-bottom:4px">Optimal path</div>
+        <div style="font-family:'JetBrains Mono',monospace;font-size:12px;color:var(--text)">(0,0) -> (0,1) -> (1,2) -> (2,2) = <span style="color:#00f5c8">4 cells</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Row 4: Code -->
+  <div class="grid-2" style="margin-bottom:20px">
+    <div class="card">
+      <div class="card-title">💻 Code</div>
+      <div class="code-tabs">
+        <button class="code-tab active" onclick="switchBfsmCode('java',this)">Java</button>
+        <button class="code-tab" onclick="switchBfsmCode('python',this)">Python</button>
+      </div>
+      <div id="bfsm-code-java" class="code-block active">
+<span class="kw">class</span> <span class="cls">Solution</span> {
+  <span class="kw">public int</span> <span class="fn">shortestPathBinaryMatrix</span>(<span class="kw">int</span>[][] grid) {
+    <span class="kw">int</span> n = grid.length;
+    <span class="kw">if</span> (grid[0][0]==1 || grid[n-1][n-1]==1) <span class="kw">return</span> -1;
+    <span class="kw">if</span> (n==1) <span class="kw">return</span> 1;
+    <span class="kw">int</span>[][] dirs={{-1,-1},{-1,0},{-1,1},{0,-1},{0,1},{1,-1},{1,0},{1,1}};
+    Queue&lt;<span class="kw">int</span>[]&gt; q=<span class="kw">new</span> LinkedList&lt;&gt;();
+    q.offer(<span class="kw">new int</span>[]{0,0,1});
+    grid[0][0]=1;
+    <span class="kw">while</span>(!q.isEmpty()){
+      <span class="kw">int</span>[] cur=q.poll();
+      <span class="kw">int</span> r=cur[0],c=cur[1],d=cur[2];
+      <span class="kw">for</span>(<span class="kw">int</span>[] dir:dirs){
+        <span class="kw">int</span> nr=r+dir[0],nc=c+dir[1];
+        <span class="kw">if</span>(nr&lt;0||nr&gt;=n||nc&lt;0||nc&gt;=n) <span class="kw">continue</span>;
+        <span class="kw">if</span>(grid[nr][nc]!=0) <span class="kw">continue</span>;
+        <span class="kw">if</span>(nr==n-1&amp;&amp;nc==n-1) <span class="kw">return</span> d+1;
+        grid[nr][nc]=1;
+        q.offer(<span class="kw">new int</span>[]{nr,nc,d+1});
+      }
+    }
+    <span class="kw">return</span> -1;
+  }
+}
+<span class="cm">// Time O(N^2) | Space O(N^2)</span>
+      </div>
+      <div id="bfsm-code-python" class="code-block" style="display:none">
+<span class="kw">from</span> collections <span class="kw">import</span> deque
+
+<span class="kw">class</span> <span class="cls">Solution</span>:
+  <span class="kw">def</span> <span class="fn">shortestPathBinaryMatrix</span>(<span class="kw">self</span>, grid):
+    n=len(grid)
+    <span class="kw">if</span> grid[0][0]==1 <span class="kw">or</span> grid[n-1][n-1]==1: <span class="kw">return</span> -1
+    <span class="kw">if</span> n==1: <span class="kw">return</span> 1
+    dirs=[(-1,-1),(-1,0),(-1,1),(0,-1),(0,1),(1,-1),(1,0),(1,1)]
+    q=deque([(0,0,1)])
+    grid[0][0]=1
+    <span class="kw">while</span> q:
+      r,c,d=q.popleft()
+      <span class="kw">for</span> dr,dc <span class="kw">in</span> dirs:
+        nr,nc=r+dr,c+dc
+        <span class="kw">if not</span>(0&lt;=nr&lt;n <span class="kw">and</span> 0&lt;=nc&lt;n): <span class="kw">continue</span>
+        <span class="kw">if</span> grid[nr][nc]!=0: <span class="kw">continue</span>
+        <span class="kw">if</span> nr==n-1 <span class="kw">and</span> nc==n-1: <span class="kw">return</span> d+1
+        grid[nr][nc]=1
+        q.append((nr,nc,d+1))
+    <span class="kw">return</span> -1
+<span class="cm"># Time O(N^2) | Space O(N^2)</span>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">🗺️ 8-Direction Visual</div>
+      <div style="display:flex;gap:16px;align-items:flex-start">
+        <svg viewBox="0 0 192 192" style="width:180px;height:180px;flex-shrink:0">
+          <rect x="8"   y="8"   width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="68"  y="8"   width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="128" y="8"   width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="8"   y="68"  width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="68"  y="68"  width="52" height="52" rx="6" fill="#002d26" stroke="#00f5c8" stroke-width="2"/>
+          <rect x="128" y="68"  width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="8"   y="128" width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="68"  y="128" width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <rect x="128" y="128" width="52" height="52" rx="6" fill="#1a0d3d" stroke="#7c3aed" stroke-width="1.5"/>
+          <line x1="90" y1="68" x2="50" y2="52" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="94" y1="68" x2="94" y2="52" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="98" y1="68" x2="138" y2="52" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="68" y1="94" x2="52" y2="94" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="120" y1="94" x2="136" y2="94" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="90" y1="120" x2="50" y2="138" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="94" y1="120" x2="94" y2="136" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <line x1="98" y1="120" x2="138" y2="136" stroke="#f59e0b" stroke-width="1.5" marker-end="url(#bfsm-fc-arr)"/>
+          <text x="34"  y="36"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">-1,-1</text>
+          <text x="94"  y="36"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">-1,0</text>
+          <text x="154" y="36"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">-1,+1</text>
+          <text x="34"  y="96"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">0,-1</text>
+          <text x="94"  y="96"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#00f5c8">cur</text>
+          <text x="154" y="96"  text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">0,+1</text>
+          <text x="34"  y="156" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">+1,-1</text>
+          <text x="94"  y="156" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">+1,0</text>
+          <text x="154" y="156" text-anchor="middle" font-family="JetBrains Mono" font-size="9" fill="#c084fc">+1,+1</text>
+        </svg>
+        <div style="font-size:12px;color:var(--text-dim);line-height:1.8">
+          <div class="insight insight-cyan" style="margin-bottom:8px">
+            <strong>Mark on Enqueue!</strong>
+            Mark grid[nr][nc]=1 the moment you push to queue — not when you pop. Prevents duplicate enqueues.
+          </div>
+          <div class="insight insight-amber" style="margin-bottom:0">
+            <strong>Why BFS beats Dijkstra</strong>
+            All edges weight=1. BFS processes in exact distance order. No heap needed. O(N^2) vs O(N^2 log N).
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+</div><!-- end tab-bfsmatrix -->
+
 </div><!-- /panel-container -->
 
 
@@ -9602,6 +11226,8 @@ function switchCs2Code(lang,btn){
   document.getElementById('cs2-code-'+lang).classList.add('active');
 }
 
+</script>
+
 <script>
 // ═══════════════════════════════════════════
 //  SHORTEST PATH (UNIT WEIGHT)  GFG
@@ -9973,6 +11599,808 @@ function switchSpdCode(lang,btn){
   document.querySelectorAll('#tab-shortestpathdag .code-tab').forEach(t=>t.classList.remove('active'));
   document.querySelectorAll('#tab-shortestpathdag .code-block').forEach(b=>b.classList.remove('active'));
   btn.classList.add('active');document.getElementById('spd-code-'+lang).classList.add('active');
+}
+</script>
+
+
+
+<script>
+// ══════════════════════════════════════════════════
+//   DIJKSTRA ANIMATION ENGINE
+// ══════════════════════════════════════════════════
+
+const DIJK_INF = 2147483647;
+
+const DIJK_EXAMPLES = [
+  {
+    label: 'Example 1',
+    V: 3,
+    src: 2,
+    edges: [[0,1,1],[1,2,3],[0,2,6]],
+    positions: [{x:80,y:130},{x:200,y:60},{x:320,y:130}]
+  },
+  {
+    label: 'Example 2',
+    V: 5,
+    src: 0,
+    edges: [[0,1,4],[0,2,8],[1,4,6],[2,3,2],[3,4,10]],
+    positions: [{x:60,y:130},{x:160,y:60},{x:160,y:200},{x:270,y:200},{x:340,y:130}]
+  },
+  {
+    label: 'Example 3',
+    V: 6,
+    src: 0,
+    edges: [[0,1,7],[0,2,9],[0,5,14],[1,2,10],[1,3,15],[2,3,11],[2,5,2],[3,4,6],[4,5,9]],
+    positions: [{x:60,y:130},{x:150,y:50},{x:240,y:130},{x:330,y:50},{x:340,y:200},{x:170,y:210}]
+  }
+];
+
+let dijkSteps=[], dijkStepIndex=0, dijkPlaying=false, dijkPlayTimer=null, dijkCurrentExample=0;
+
+function buildDijkSteps(V, rawEdges, src){
+  // Build undirected adj
+  const adj = Array.from({length:V},()=>[]);
+  for(const [u,v,w] of rawEdges){
+    adj[u].push([v,w]);
+    adj[v].push([u,w]);
+  }
+
+  const dist = new Array(V).fill(DIJK_INF);
+  dist[src] = 0;
+  const settled = new Array(V).fill(false);
+  // PQ as sorted array for simulation: [{d,node}]
+  let pq = [{d:0,node:src}];
+  const steps = [];
+
+  function snap(type, curNode, pqSnap, relaxMsg, log){
+    steps.push({
+      type,
+      current: curNode,
+      dist: [...dist],
+      settled: [...settled],
+      pq: pqSnap.map(x=>({...x})),
+      relaxMsg: relaxMsg||'',
+      log
+    });
+  }
+
+  snap('init',-1,[{d:0,node:src}],'',`Init: dist[${src}]=0. Push (0,${src}) into PQ.`);
+
+  let iter=0;
+  while(pq.length>0 && iter<200){
+    iter++;
+    // Sort to simulate min-heap
+    pq.sort((a,b)=>a.d-b.d);
+    const {d,node:u} = pq.shift();
+
+    if(d > dist[u]){
+      snap('stale',u,[...pq],`(${d},${u}) is stale — dist[${u}]=${dist[u]===DIJK_INF?'∞':dist[u]}. Skip.`,`Pop (${d},${u}): STALE (${d} > dist[${u}]=${dist[u]===DIJK_INF?'∞':dist[u]}). Skip.`);
+      continue;
+    }
+
+    settled[u]=true;
+    snap('settle',u,[...pq],'',`Pop (${d},${u}): valid. Settle node ${u} with dist=${d}.`);
+
+    for(const [v,w] of adj[u]){
+      const nd = dist[u]+w;
+      if(nd < dist[v]){
+        dist[v]=nd;
+        pq.push({d:nd,node:v});
+        snap('relax',u,[...pq],`${u}→${v}(+${w}): ${d}+${w}=${nd} < ${dist[v]===DIJK_INF&&nd!==nd?'∞':nd+w} → updated dist[${v}]=${nd}`,`  Relax ${u}→${v}: ${d}+${w}=${nd} < prev → dist[${v}]=${nd}. Push (${nd},${v}).`);
+      } else {
+        snap('norelax',u,[...pq],`${u}→${v}(+${w}): ${d}+${w}=${nd} ≥ dist[${v}]=${dist[v]===DIJK_INF?'∞':dist[v]} — no update`,`  No relax ${u}→${v}: ${d}+${w}=${nd} ≥ dist[${v}]=${dist[v]===DIJK_INF?'∞':dist[v]}.`);
+      }
+    }
+  }
+
+  snap('done',-1,[],'',`✓ Done. dist=[${dist.map(d=>d===DIJK_INF?'∞':d).join(', ')}]`);
+  return steps;
+}
+
+function dijkDrawGraph(exIdx, step){
+  const {V,edges,positions} = DIJK_EXAMPLES[exIdx];
+  const eg = document.getElementById('dijk-edges-g');
+  const ng = document.getElementById('dijk-nodes-g');
+  eg.innerHTML=''; ng.innerHTML='';
+
+  const dist = step.dist||new Array(V).fill(DIJK_INF);
+  const settled = step.settled||new Array(V).fill(false);
+  const cur = step.current;
+
+  // Build set of settled + relaxing edges
+  const relaxingEdges = new Set();
+  if(step.type==='relax' && cur>=0){
+    for(const [u,v,w] of edges){
+      if(u===cur||v===cur) relaxingEdges.add(`${Math.min(u,v)}-${Math.max(u,v)}`);
+    }
+  }
+
+  // Draw edges
+  for(const [u,v,w] of edges){
+    const p1=positions[u], p2=positions[v];
+    const dx=p2.x-p1.x, dy=p2.y-p1.y, len=Math.sqrt(dx*dx+dy*dy);
+    const r=20;
+    const sx=p1.x+dx/len*r, sy=p1.y+dy/len*r;
+    const ex=p2.x-dx/len*r, ey=p2.y-dy/len*r;
+    const key=`${Math.min(u,v)}-${Math.max(u,v)}`;
+    const isRelax=relaxingEdges.has(key);
+    const isSettled=settled[u]&&settled[v];
+
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',sx);line.setAttribute('y1',sy);
+    line.setAttribute('x2',ex);line.setAttribute('y2',ey);
+    line.setAttribute('stroke',isRelax?'#f59e0b':isSettled?'#00f5c844':'#4a5568');
+    line.setAttribute('stroke-width',isRelax?'2.5':isSettled?'2':'1.5');
+    eg.appendChild(line);
+
+    // Weight
+    const mx=(sx+ex)/2, my=(sy+ey)/2;
+    const wt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    wt.setAttribute('x',mx);wt.setAttribute('y',my-5);wt.setAttribute('text-anchor','middle');
+    wt.setAttribute('font-family','JetBrains Mono');wt.setAttribute('font-size','9');
+    wt.setAttribute('fill',isRelax?'#f59e0b':'#555577');wt.setAttribute('font-weight','700');
+    wt.textContent=w;eg.appendChild(wt);
+  }
+
+  // Draw nodes
+  for(let i=0;i<V;i++){
+    const p=positions[i];
+    const g=document.createElementNS('http://www.w3.org/2000/svg','g');
+    const c=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    c.setAttribute('cx',p.x);c.setAttribute('cy',p.y);c.setAttribute('r',20);
+
+    const isCur=i===cur;
+    const isSettledNode=settled[i];
+    const isSrc=i===DIJK_EXAMPLES[exIdx].src;
+
+    if(isCur&&!isSettledNode){
+      c.setAttribute('fill','#3d2800');c.setAttribute('stroke','#f59e0b');c.setAttribute('stroke-width','3');
+    } else if(isSettledNode){
+      c.setAttribute('fill','#003d32');c.setAttribute('stroke','#00f5c8');c.setAttribute('stroke-width','2.5');
+    } else if(dist[i]!==DIJK_INF){
+      c.setAttribute('fill','#1a0d3d');c.setAttribute('stroke','#7c3aed');c.setAttribute('stroke-width','2');
+    } else {
+      c.setAttribute('fill','#1e1e30');c.setAttribute('stroke','#2a2a3a');c.setAttribute('stroke-width','2');
+    }
+
+    const nt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    nt.setAttribute('x',p.x);nt.setAttribute('y',p.y+1);nt.setAttribute('text-anchor','middle');
+    nt.setAttribute('dominant-baseline','central');
+    nt.setAttribute('font-family','JetBrains Mono');nt.setAttribute('font-size','12');
+    nt.setAttribute('font-weight','700');
+    nt.setAttribute('fill',isCur?'#f59e0b':isSettledNode?'#00f5c8':dist[i]!==DIJK_INF?'#c084fc':'#8888aa');
+    nt.textContent=i;
+
+    const dv=dist[i]===DIJK_INF?'∞':dist[i];
+    const dt=document.createElementNS('http://www.w3.org/2000/svg','text');
+    dt.setAttribute('x',p.x);dt.setAttribute('y',p.y+34);dt.setAttribute('text-anchor','middle');
+    dt.setAttribute('font-family','JetBrains Mono');dt.setAttribute('font-size','9');
+    dt.setAttribute('font-weight','700');
+    dt.setAttribute('fill',isSettledNode?'#00f5c8':dist[i]!==DIJK_INF?'#c084fc':'#4a5568');
+    dt.textContent=`d=${dv}`;
+
+    // Src label
+    if(isSrc){
+      const sl=document.createElementNS('http://www.w3.org/2000/svg','text');
+      sl.setAttribute('x',p.x);sl.setAttribute('y',p.y-26);sl.setAttribute('text-anchor','middle');
+      sl.setAttribute('font-family','JetBrains Mono');sl.setAttribute('font-size','8');
+      sl.setAttribute('fill','#00f5c8');sl.setAttribute('font-weight','700');
+      sl.textContent='SRC';
+      g.appendChild(sl);
+    }
+
+    g.appendChild(c);g.appendChild(nt);g.appendChild(dt);
+    ng.appendChild(g);
+  }
+}
+
+function dijkRenderStep(idx){
+  const step=dijkSteps[idx];if(!step)return;
+  const ex=DIJK_EXAMPLES[dijkCurrentExample];
+  dijkDrawGraph(dijkCurrentExample,step);
+
+  // Phase text
+  const phaseMap={init:'Initialising…',settle:'Settling Node',relax:'Relaxing Edge',norelax:'No Update',stale:'Stale Entry — Skipped',done:'✓ Complete!'};
+  const colorMap={init:'var(--text-dim)',settle:'#00f5c8',relax:'#f59e0b',norelax:'#4a5568',stale:'#ef4444',done:'#00f5c8'};
+  document.getElementById('dijk-phase-text').textContent=phaseMap[step.type]||step.type;
+  document.getElementById('dijk-phase-text').style.color=colorMap[step.type]||'var(--text-dim)';
+
+  // PQ display
+  const pqEl=document.getElementById('dijk-pq-display');
+  if(!step.pq||step.pq.length===0){
+    pqEl.innerHTML='<span style="color:#4a5568;font-family:\'JetBrains Mono\',monospace;font-size:11px">empty</span>';
+  } else {
+    const sorted=[...step.pq].sort((a,b)=>a.d-b.d);
+    pqEl.innerHTML=sorted.map((e,i)=>
+      `<div class="dijk-pq-item${i===0?' top-item':''}">(${e.d},${e.node})</div>`
+    ).join('');
+  }
+
+  // Distance array
+  const V=ex.V;
+  const dd=document.getElementById('dijk-dist-display');
+  dd.innerHTML=step.dist.map((d,i)=>{
+    const dv=d===DIJK_INF?'∞':d;
+    const isSettled=step.settled&&step.settled[i];
+    const isCur=i===step.current;
+    const hasVal=d!==DIJK_INF;
+    let cls='dijk-dist-cell';
+    if(isSettled) cls+=' settled';
+    else if(isCur) cls+=' relaxing';
+    else if(hasVal) cls+=' updated';
+    return `<div class="${cls}">${dv}<span class="cell-idx">[${i}]</span></div>`;
+  }).join('');
+
+  // Relax badge
+  const rd=document.getElementById('dijk-relax-display');
+  if(step.relaxMsg){
+    const isGood=step.type==='relax';
+    const isBad=step.type==='norelax';
+    rd.textContent=step.relaxMsg;
+    rd.style.color=isGood?'#00f5c8':isBad?'#4a5568':'#f59e0b';
+  } else {
+    rd.textContent='–';rd.style.color='var(--text-dim)';
+  }
+
+  // Step log
+  const sl=document.getElementById('dijk-step-log');
+  const entry=document.createElement('div');
+  entry.className='log-entry active-log';
+  const cmap={relax:'#00f5c8',settle:'#00f5c8',done:'#00f5c8',stale:'#ef4444',norelax:'#4a5568',init:'var(--text-dim)'};
+  const clr=cmap[step.type]||'var(--text-dim)';
+  entry.style.borderLeftColor=clr;entry.style.color=clr;
+  entry.textContent=`[${idx}] ${step.log}`;
+  sl.querySelectorAll('.log-entry').forEach(e=>{e.classList.remove('active-log');e.style.borderLeftColor='';e.style.color='';});
+  sl.appendChild(entry);sl.scrollTop=sl.scrollHeight;
+
+  // Counter
+  document.getElementById('dijk-step-counter').textContent=`Step ${idx+1} / ${dijkSteps.length}`;
+  document.getElementById('dijk-progress-fill').style.width=((idx/Math.max(dijkSteps.length-1,1))*100)+'%';
+}
+
+function switchDijkExample(idx,btn){
+  dijkCurrentExample=idx;
+  document.querySelectorAll('#tab-dijkstra .ex-btn').forEach((b,i)=>b.classList.toggle('active',i===idx));
+  dijkResetAnim();
+}
+
+function dijkTogglePlay(){
+  dijkPlaying=!dijkPlaying;
+  document.getElementById('dijk-play-btn').textContent=dijkPlaying?'⏸ PAUSE':'▶ PLAY';
+  if(dijkPlaying) dijkAutoPlay();
+  else clearTimeout(dijkPlayTimer);
+}
+function dijkAutoPlay(){
+  if(!dijkPlaying)return;
+  if(dijkStepIndex>=dijkSteps.length-1){dijkPlaying=false;document.getElementById('dijk-play-btn').textContent='▶ PLAY';return;}
+  dijkStepForward();
+  dijkPlayTimer=setTimeout(dijkAutoPlay,parseInt(document.getElementById('dijk-speed-select').value));
+}
+function dijkStepForward(){
+  if(dijkStepIndex<dijkSteps.length-1){dijkStepIndex++;dijkRenderStep(dijkStepIndex);}
+}
+function dijkResetAnim(){
+  clearTimeout(dijkPlayTimer);dijkPlaying=false;
+  document.getElementById('dijk-play-btn').textContent='▶ PLAY';
+  dijkStepIndex=0;
+  const ex=DIJK_EXAMPLES[dijkCurrentExample];
+  dijkSteps=buildDijkSteps(ex.V,ex.edges,ex.src);
+  document.getElementById('dijk-step-log').innerHTML='';
+  document.getElementById('dijk-progress-fill').style.width='0%';
+  dijkRenderStep(0);
+}
+function switchDijkCode(lang,btn){
+  document.querySelectorAll('#tab-dijkstra .code-tab').forEach(t=>t.classList.remove('active'));
+  document.querySelectorAll('#tab-dijkstra .code-block').forEach(b=>{b.classList.remove('active');b.style.display='none';});
+  btn.classList.add('active');
+  const target=document.getElementById('dijk-code-'+lang);
+  target.classList.add('active');target.style.display='block';
+}
+
+// Init handled by main switchTab
+
+</script>
+
+
+
+
+<script>
+// ══════════════════════════════════════════════════
+//   SHORTEST PATH IN BINARY MATRIX — BFS ENGINE
+// ══════════════════════════════════════════════════
+
+const BFSM_EXAMPLES = [
+  { label:'Ex1', grid:[[0,1],[1,0]], ans:2 },
+  { label:'Ex2', grid:[[0,0,0],[1,1,0],[1,1,0]], ans:4 },
+  { label:'Ex3', grid:[[1,0,0],[1,1,0],[1,1,0]], ans:-1 },
+  { label:'Ex4', grid:[
+    [0,0,0,0,1],
+    [1,0,1,0,0],
+    [0,0,0,1,0],
+    [1,1,0,0,0],
+    [0,0,0,1,0]
+  ], ans:8 }
+];
+
+let bfsmCurrentExample=0, bfsmSteps=[], bfsmStepIndex=0, bfsmPlaying=false, bfsmPlayTimer=null;
+const BFSM_DIRS=[[-1,-1],[-1,0],[-1,1],[0,-1],[0,1],[1,-1],[1,0],[1,1]];
+
+function buildBfsmSteps(grid){
+  const n=grid.length;
+  const steps=[];
+  const g=grid.map(r=>[...r]);
+  const visited=Array.from({length:n},()=>new Array(n).fill(false));
+
+  function snap(type,queue,cur,info,result){
+    steps.push({
+      type, info, result,
+      queue: queue.map(function(x){return{r:x.r,c:x.c,d:x.d};}),
+      current: cur ? {r:cur.r,c:cur.c,d:cur.d} : null,
+      visited: visited.map(function(row){return row.slice();})
+    });
+  }
+
+  if(g[0][0]===1||g[n-1][n-1]===1){
+    snap('blocked',[],null,'Start or end is blocked. Return -1.',-1);
+    return steps;
+  }
+
+  var queue=[{r:0,c:0,d:1}];
+  visited[0][0]=true;
+  g[0][0]=2;
+  snap('init',queue,null,'Init: enqueue (0,0,dist=1). Mark (0,0) visited.',null);
+
+  while(queue.length>0){
+    var cur=queue.shift();
+    var r=cur.r, c=cur.c, d=cur.d;
+    snap('dequeue',queue,cur,'Dequeue ('+r+','+c+',d='+d+'). Check neighbors.',null);
+
+    if(r===n-1&&c===n-1){
+      snap('found',queue,cur,'Reached target ('+r+','+c+')! Answer = '+d+'.',d);
+      return steps;
+    }
+
+    for(var i=0;i<BFSM_DIRS.length;i++){
+      var dr=BFSM_DIRS[i][0], dc=BFSM_DIRS[i][1];
+      var nr=r+dr, nc=c+dc;
+      if(nr<0||nr>=n||nc<0||nc>=n) continue;
+      if(g[nr][nc]!==0) continue;
+      visited[nr][nc]=true;
+      g[nr][nc]=2;
+      queue.push({r:nr,c:nc,d:d+1});
+      snap('enqueue',queue,cur,'  Enqueue ('+nr+','+nc+',d='+(d+1)+'). Mark visited.',null);
+    }
+  }
+  snap('notfound',[],null,'Queue empty. No path. Return -1.',-1);
+  return steps;
+}
+
+function bfsmDrawGrid(exIdx,step){
+  var origGrid=BFSM_EXAMPLES[exIdx].grid;
+  var n=origGrid.length;
+  var container=document.getElementById('bfsm-grid-container');
+  var cellSize=Math.min(54,Math.floor(290/n));
+  container.style.display='grid';
+  container.style.gridTemplateColumns='repeat('+n+','+cellSize+'px)';
+  container.style.gap='3px';
+  container.style.padding='8px';
+  container.innerHTML='';
+
+  var cur=step.current;
+  var vis=step.visited;
+
+  for(var r=0;r<n;r++){
+    for(var c=0;c<n;c++){
+      var cell=document.createElement('div');
+      var sz=cellSize+'px';
+      cell.style.width=sz;
+      cell.style.height=sz;
+      cell.style.borderRadius='5px';
+      cell.style.display='flex';
+      cell.style.alignItems='center';
+      cell.style.justifyContent='center';
+      cell.style.fontFamily='monospace';
+      cell.style.fontSize=(cellSize>44?'12':'10')+'px';
+      cell.style.fontWeight='700';
+      cell.style.transition='all 0.3s';
+      cell.style.position='relative';
+
+      var isBlocked=origGrid[r][c]===1;
+      var isVis=vis&&vis[r]&&vis[r][c];
+      var isCur=cur&&cur.r===r&&cur.c===c;
+      var isStart=r===0&&c===0;
+      var isEnd=r===n-1&&c===n-1;
+      var isFound=step.type==='found'&&isCur;
+
+      if(isFound){
+        cell.style.background='#003d32';
+        cell.style.border='2px solid #00f5c8';
+        cell.style.color='#00f5c8';
+        cell.textContent='OK';
+      } else if(isCur){
+        cell.style.background='#3d2800';
+        cell.style.border='2px solid #f59e0b';
+        cell.style.color='#f59e0b';
+        cell.textContent=r+','+c;
+        if(cellSize<40) cell.style.fontSize='7px';
+      } else if(isBlocked){
+        cell.style.background='#1a0505';
+        cell.style.border='1.5px solid #4a1a1a';
+        cell.style.color='#4a5568';
+        cell.textContent='1';
+      } else if(isVis){
+        cell.style.background='#003d2a';
+        cell.style.border='1.5px solid #00f5c866';
+        cell.style.color='#00f5c8';
+        cell.textContent='0';
+      } else {
+        cell.style.background='#1e1e30';
+        cell.style.border='1.5px solid #3a3a50';
+        cell.style.color='#6666aa';
+        cell.textContent='0';
+      }
+
+      if(isStart){
+        var s=document.createElement('span');
+        s.style.cssText='position:absolute;top:1px;left:2px;font-size:7px;color:#a78bfa;';
+        s.textContent='S';
+        cell.appendChild(s);
+      }
+      if(isEnd){
+        var e=document.createElement('span');
+        e.style.cssText='position:absolute;top:1px;right:2px;font-size:7px;color:#00f5c8;';
+        e.textContent='E';
+        cell.appendChild(e);
+      }
+      container.appendChild(cell);
+    }
+  }
+}
+
+function bfsmRenderStep(idx){
+  var step=bfsmSteps[idx]; if(!step) return;
+  bfsmDrawGrid(bfsmCurrentExample,step);
+
+  // Queue
+  var qd=document.getElementById('bfsm-queue-display');
+  if(!step.queue||step.queue.length===0){
+    qd.innerHTML='';
+    var empty=document.createElement('span');
+    empty.style.cssText='color:#4a5568;font-family:monospace;font-size:11px;';
+    empty.textContent='empty';
+    qd.appendChild(empty);
+  } else {
+    qd.innerHTML='';
+    var shown=step.queue.slice(0,10);
+    for(var i=0;i<shown.length;i++){
+      var e=shown[i];
+      var item=document.createElement('div');
+      item.style.cssText='background:'+(i===0?'#2d2000':'#1a0d3d')+';border:1.5px solid '+(i===0?'#f59e0b':'#7c3aed')+';border-radius:5px;padding:3px 7px;font-family:monospace;font-size:10px;font-weight:700;color:'+(i===0?'#f59e0b':'#c084fc')+';';
+      item.textContent='('+e.r+','+e.c+','+e.d+')';
+      qd.appendChild(item);
+    }
+    if(step.queue.length>10){
+      var more=document.createElement('span');
+      more.style.cssText='color:#4a5568;font-size:10px;';
+      more.textContent='+'+( step.queue.length-10)+' more';
+      qd.appendChild(more);
+    }
+  }
+
+  // Current
+  var cd=document.getElementById('bfsm-current-display');
+  if(step.current){
+    cd.textContent='('+step.current.r+', '+step.current.c+', dist='+step.current.d+')';
+    cd.style.color=step.type==='found'?'#00f5c8':'#f59e0b';
+  } else {
+    cd.textContent='–';
+    cd.style.color='var(--text-dim)';
+  }
+
+  // Info
+  document.getElementById('bfsm-step-info').textContent=step.info||'–';
+
+  // Result
+  var rd=document.getElementById('bfsm-result-display');
+  if(step.result!==null&&step.result!==undefined){
+    rd.textContent=step.result===-1?'No path found → -1':'Shortest path = '+step.result;
+    rd.style.color=step.result===-1?'#ef4444':'#00f5c8';
+  } else {
+    rd.textContent='searching…';
+    rd.style.color='var(--text-dim)';
+  }
+
+  // Log
+  var sl=document.getElementById('bfsm-step-log');
+  var entry=document.createElement('div');
+  entry.className='log-entry active-log';
+  var cmap={found:'#00f5c8',enqueue:'#c084fc',dequeue:'#f59e0b',notfound:'#ef4444',blocked:'#ef4444',init:'var(--text-dim)'};
+  var clr=cmap[step.type]||'var(--text-dim)';
+  entry.style.borderLeftColor=clr;
+  entry.style.color=clr;
+  entry.textContent='['+idx+'] '+step.info;
+  sl.querySelectorAll('.log-entry').forEach(function(e){
+    e.classList.remove('active-log');
+    e.style.borderLeftColor='';
+    e.style.color='';
+  });
+  sl.appendChild(entry);
+  sl.scrollTop=sl.scrollHeight;
+  document.getElementById('bfsm-progress-fill').style.width=((idx/Math.max(bfsmSteps.length-1,1))*100)+'%';
+}
+
+function bfsmSelectExample(idx,btn){
+  bfsmCurrentExample=idx;
+  document.querySelectorAll('#tab-bfsmatrix .ex-btn').forEach(function(b,i){
+    b.classList.toggle('active',i===idx);
+  });
+  bfsmResetAnim();
+}
+
+function bfsmTogglePlay(){
+  bfsmPlaying=!bfsmPlaying;
+  document.getElementById('bfsm-play-btn').textContent=bfsmPlaying?'⏸ PAUSE':'▶ PLAY';
+  if(bfsmPlaying) bfsmAutoPlay();
+  else clearTimeout(bfsmPlayTimer);
+}
+function bfsmAutoPlay(){
+  if(!bfsmPlaying) return;
+  if(bfsmStepIndex>=bfsmSteps.length-1){
+    bfsmPlaying=false;
+    document.getElementById('bfsm-play-btn').textContent='▶ PLAY';
+    return;
+  }
+  bfsmStepForward();
+  bfsmPlayTimer=setTimeout(bfsmAutoPlay,parseInt(document.getElementById('bfsm-speed-select').value));
+}
+function bfsmStepForward(){
+  if(bfsmStepIndex<bfsmSteps.length-1){bfsmStepIndex++;bfsmRenderStep(bfsmStepIndex);}
+}
+function bfsmResetAnim(){
+  clearTimeout(bfsmPlayTimer);
+  bfsmPlaying=false;
+  document.getElementById('bfsm-play-btn').textContent='▶ PLAY';
+  bfsmStepIndex=0;
+  var ex=BFSM_EXAMPLES[bfsmCurrentExample];
+  bfsmSteps=buildBfsmSteps(ex.grid.map(function(r){return r.slice();}));
+  document.getElementById('bfsm-step-log').innerHTML='';
+  document.getElementById('bfsm-progress-fill').style.width='0%';
+  document.getElementById('bfsm-result-display').textContent='waiting…';
+  document.getElementById('bfsm-result-display').style.color='var(--text-dim)';
+  bfsmRenderStep(0);
+}
+function switchBfsmCode(lang,btn){
+  document.querySelectorAll('#tab-bfsmatrix .code-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#tab-bfsmatrix .code-block').forEach(function(b){
+    b.classList.remove('active');
+    b.style.display='none';
+  });
+  btn.classList.add('active');
+  var target=document.getElementById('bfsm-code-'+lang);
+  target.classList.add('active');
+  target.style.display='block';
+}
+</script>
+
+
+<script>
+// ══════════════════════════════════════════════════
+//   GRAPH BASICS — BIPARTITE CODE TAB SWITCHER
+// ══════════════════════════════════════════════════
+function switchGbCode(lang, btn) {
+  document.querySelectorAll('#tab-graphbasics .code-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#tab-graphbasics .code-block').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('gb-code-'+lang).classList.add('active');
+}
+
+// ══════════════════════════════════════════════════
+//   ADJACENCY MATRIX — INTERACTIVE ENGINE
+// ══════════════════════════════════════════════════
+
+var ADJM_EXAMPLES = [
+  {
+    label:'Undirected Square', V:4, directed:false, weighted:false,
+    initEdges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1]],
+    positions:[{x:80,y:70},{x:260,y:70},{x:260,y:190},{x:80,y:190}]
+  },
+  {
+    label:'Directed', V:4, directed:true, weighted:false,
+    initEdges:[[0,1,1],[1,2,1],[2,3,1],[3,0,1],[0,2,1]],
+    positions:[{x:80,y:70},{x:260,y:70},{x:260,y:190},{x:80,y:190}]
+  },
+  {
+    label:'Weighted', V:5, directed:false, weighted:true,
+    initEdges:[[0,1,4],[0,2,2],[1,3,5],[2,3,1],[3,4,3]],
+    positions:[{x:60,y:130},{x:170,y:55},{x:170,y:205},{x:280,y:130},{x:310,y:55}]
+  },
+  {
+    label:'Empty', V:4, directed:false, weighted:false,
+    initEdges:[],
+    positions:[{x:80,y:70},{x:260,y:70},{x:260,y:190},{x:80,y:190}]
+  }
+];
+
+var adjmCurrentEx=0, adjmMatrix=[], adjmHighlight=null;
+var adjmSteps=[]; // placeholder so typeof check passes
+
+function adjmSelectExample(idx,btn){
+  adjmCurrentEx=idx;
+  document.querySelectorAll('#tab-adjmatrix .ex-btn').forEach(function(b,i){b.classList.toggle('active',i===idx);});
+  adjmInit();
+}
+
+function adjmInit(){
+  var ex=ADJM_EXAMPLES[adjmCurrentEx];
+  var V=ex.V;
+  adjmMatrix=[];
+  for(var i=0;i<V;i++){adjmMatrix.push([]);for(var j=0;j<V;j++)adjmMatrix[i].push(0);}
+  for(var e=0;e<ex.initEdges.length;e++){
+    var u=ex.initEdges[e][0],v=ex.initEdges[e][1],w=ex.initEdges[e][2]||1;
+    adjmMatrix[u][v]=w;
+    if(!ex.directed) adjmMatrix[v][u]=w;
+  }
+  adjmHighlight=null;
+  adjmRender();
+}
+
+function adjmToggleCell(r,c){
+  var ex=ADJM_EXAMPLES[adjmCurrentEx];
+  if(r===c) return;
+  var w=ex.weighted?1:1;
+  adjmMatrix[r][c]=adjmMatrix[r][c]===0?w:0;
+  if(!ex.directed) adjmMatrix[c][r]=adjmMatrix[r][c];
+  adjmHighlight={r:r,c:c};
+  adjmRender();
+}
+
+function adjmRender(){
+  var ex=ADJM_EXAMPLES[adjmCurrentEx];
+  var V=ex.V;
+
+  // ── Matrix table ──
+  var mc=document.getElementById('adjm-matrix-container');
+  var cs=Math.min(46,Math.floor(220/V));
+  var fs=cs>38?12:10;
+  var html='<table style="border-collapse:separate;border-spacing:2px;font-family:monospace">';
+  html+='<tr><td style="width:22px"></td>';
+  for(var c=0;c<V;c++) html+='<td style="width:'+cs+'px;text-align:center;font-size:10px;color:#8888aa;font-weight:700;padding-bottom:4px">'+c+'</td>';
+  html+='</tr>';
+  for(var r=0;r<V;r++){
+    html+='<tr><td style="font-size:10px;color:#8888aa;font-weight:700;text-align:right;padding-right:5px;vertical-align:middle">'+r+'</td>';
+    for(var cc=0;cc<V;cc++){
+      var val=adjmMatrix[r][cc];
+      var isHL=adjmHighlight&&((adjmHighlight.r===r&&adjmHighlight.c===cc)||(adjmHighlight.c===r&&adjmHighlight.r===cc));
+      var isDiag=r===cc;
+      var hasEdge=val!==0;
+      var bg=isDiag?'#101018':hasEdge?(isHL?'#2d2000':'#003d2a'):'#1a1a28';
+      var bd=isHL?'2px solid #f59e0b':hasEdge?'1.5px solid #00f5c855':'1px solid #2a2a3a';
+      var color=isDiag?'#444466':hasEdge?(isHL?'#f59e0b':'#00f5c8'):'#3a3a58';
+      var cursor=isDiag?'default':'pointer';
+      html+='<td onclick="'+( isDiag?'':'adjmToggleCell('+r+','+cc+')')+'" style="width:'+cs+'px;height:'+cs+'px;text-align:center;background:'+bg+';border:'+bd+';border-radius:4px;color:'+color+';font-family:monospace;font-size:'+fs+'px;font-weight:700;cursor:'+cursor+';transition:all 0.2s;user-select:none">'+val+'</td>';
+    }
+    html+='</tr>';
+  }
+  html+='</table>';
+  mc.innerHTML=html;
+
+  // ── Canvas graph ──
+  var canvas=document.getElementById('adjm-canvas');
+  if(!canvas) return;
+  var ctx=canvas.getContext('2d');
+  var W=340,H=260;
+  ctx.clearRect(0,0,W,H);
+  var pos=ex.positions;
+  var nodeR=18;
+
+  // Draw edges
+  for(var r2=0;r2<V;r2++){
+    for(var c2=0;c2<V;c2++){
+      if(adjmMatrix[r2][c2]===0) continue;
+      if(!ex.directed&&c2<r2) continue;
+      var p1=pos[r2],p2=pos[c2];
+      var isHL2=adjmHighlight&&((adjmHighlight.r===r2&&adjmHighlight.c===c2)||(adjmHighlight.c===r2&&adjmHighlight.r===c2));
+      var dx=p2.x-p1.x,dy=p2.y-p1.y,len=Math.sqrt(dx*dx+dy*dy);
+      var ux=dx/len,uy=dy/len;
+      var sx=p1.x+ux*nodeR,sy=p1.y+uy*nodeR;
+      var ex2=p2.x-ux*(nodeR+(ex.directed?8:0)),ey2=p2.y-uy*(nodeR+(ex.directed?8:0));
+      ctx.beginPath();
+      ctx.moveTo(sx,sy);ctx.lineTo(ex2,ey2);
+      ctx.strokeStyle=isHL2?'#f59e0b':'#00f5c8';
+      ctx.lineWidth=isHL2?2.5:1.8;
+      ctx.stroke();
+      // Arrow for directed
+      if(ex.directed){
+        var ax=ex2,ay=ey2,al=8;
+        var nx=-uy,ny=ux;
+        ctx.beginPath();
+        ctx.moveTo(ax,ay);
+        ctx.lineTo(ax-ux*al+nx*4,ay-uy*al+ny*4);
+        ctx.lineTo(ax-ux*al-nx*4,ay-uy*al-ny*4);
+        ctx.closePath();
+        ctx.fillStyle=isHL2?'#f59e0b':'#00f5c8';
+        ctx.fill();
+      }
+      // Weight label
+      if(ex.weighted&&adjmMatrix[r2][c2]>0){
+        var mx=(p1.x+p2.x)/2,my=(p1.y+p2.y)/2;
+        ctx.fillStyle=isHL2?'#f59e0b':'#fbbf24';
+        ctx.font='bold 11px monospace';
+        ctx.textAlign='center';
+        ctx.fillText(adjmMatrix[r2][c2],mx,my-6);
+      }
+    }
+  }
+  // Draw nodes
+  for(var i=0;i<V;i++){
+    var p=pos[i];
+    ctx.beginPath();
+    ctx.arc(p.x,p.y,nodeR,0,Math.PI*2);
+    ctx.fillStyle='#003d32';
+    ctx.fill();
+    ctx.strokeStyle='#00f5c8';
+    ctx.lineWidth=2;
+    ctx.stroke();
+    ctx.fillStyle='#00f5c8';
+    ctx.font='bold 13px monospace';
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(i,p.x,p.y);
+  }
+
+  // ── Edge list ──
+  var edges=[];
+  for(var r3=0;r3<V;r3++){
+    for(var c3=0;c3<V;c3++){
+      if(adjmMatrix[r3][c3]===0) continue;
+      if(!ex.directed&&c3<r3) continue;
+      var sym=ex.directed?'→':'—';
+      if(ex.weighted) edges.push(r3+sym+c3+'('+adjmMatrix[r3][c3]+')');
+      else edges.push(r3+sym+c3);
+    }
+  }
+  document.getElementById('adjm-edgelist').textContent=edges.length?edges.join('  ,  '):'(no edges — click matrix cells to add)';
+
+  // ── Degree table ──
+  var dtEl=document.getElementById('adjm-degree-table');
+  var rows=[];
+  for(var i2=0;i2<V;i2++){
+    var inDeg=0,outDeg=0;
+    for(var j=0;j<V;j++){if(adjmMatrix[i2][j]!==0)outDeg++;if(adjmMatrix[j][i2]!==0)inDeg++;}
+    if(ex.directed) rows.push('<span style="color:#8888aa">node '+i2+':</span>  in=<span style="color:#c084fc">'+inDeg+'</span>  out=<span style="color:#00f5c8">'+outDeg+'</span>');
+    else rows.push('<span style="color:#8888aa">node '+i2+':</span>  degree=<span style="color:#00f5c8">'+outDeg+'</span>');
+  }
+  dtEl.innerHTML=rows.join('<br>');
+
+  // ── Matrix properties ──
+  var propsEl=document.getElementById('adjm-props');
+  var edgeCount=0;
+  for(var r4=0;r4<V;r4++)for(var c4=0;c4<V;c4++)if(adjmMatrix[r4][c4]!==0)edgeCount++;
+  if(!ex.directed)edgeCount/=2;
+  var sym=true;
+  for(var r5=0;r5<V;r5++)for(var c5=0;c5<V;c5++)if(adjmMatrix[r5][c5]!==adjmMatrix[c5][r5])sym=false;
+  propsEl.innerHTML=
+    '<span style="color:#8888aa">Vertices (V):</span> <span style="color:#00f5c8">'+V+'</span><br>'+
+    '<span style="color:#8888aa">Edges (E):</span> <span style="color:#00f5c8">'+edgeCount+'</span><br>'+
+    '<span style="color:#8888aa">Type:</span> <span style="color:#c084fc">'+(ex.directed?'Directed':'Undirected')+(ex.weighted?' Weighted':'')+'</span><br>'+
+    '<span style="color:#8888aa">Symmetric:</span> <span style="color:'+(sym?'#00f5c8':'#ef4444')+'">'+sym+'</span><br>'+
+    '<span style="color:#8888aa">Space used:</span> <span style="color:#f59e0b">'+V+'×'+V+' = '+(V*V)+' cells</span>';
+}
+
+function adjmResetAnim(){ adjmInit(); }
+
+function switchAdjmCode(lang,btn){
+  document.querySelectorAll('#tab-adjmatrix .code-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#tab-adjmatrix .code-block').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('adjm-code-'+lang).classList.add('active');
+}
+
+function switchAdjmCode(lang,btn){
+  document.querySelectorAll('#tab-adjmatrix .code-tab').forEach(function(t){t.classList.remove('active');});
+  document.querySelectorAll('#tab-adjmatrix .code-block').forEach(function(b){b.classList.remove('active');});
+  btn.classList.add('active');
+  document.getElementById('adjm-code-'+lang).classList.add('active');
 }
 </script>
 
